@@ -1,0 +1,539 @@
+{% comment %}
+  Crumb & Co. footer.
+  Custom section (same approach as sections/crumb-header.liquid): own markup
+  and crumb-* classes, real Shopify data underneath rather than static mockup text.
+
+  - Newsletter uses Shopify's native {% form 'customer' %}, so signups actually
+    reach Customers > with the "newsletter" tag, and success/error states are real.
+  - Payment icons use shop.enabled_payment_types + payment_type_svg_tag, so the
+    icons shown always match what's actually enabled in Settings > Payments.
+  - Shop / Story menus are separate link lists (not the header's main-menu).
+{% endcomment %}
+
+{%- liquid
+  assign shop_menu = section.settings.shop_menu
+  assign story_menu = section.settings.story_menu
+  assign brand_name = section.settings.brand_name | default: shop.name
+-%}
+
+<footer class="crumb-footer">
+  <div class="crumb-footer__inner">
+    <div class="crumb-footer__grid">
+      <div class="crumb-footer__about">
+        <a class="crumb-footer__brand" href="{{ routes.root_url }}">
+          <span class="crumb-footer__brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+          </span>
+          <span class="crumb-footer__brand-name">{{ brand_name }}</span>
+        </a>
+
+        {%- if section.settings.description != blank -%}
+          <p class="crumb-footer__description">{{ section.settings.description }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.trust_badge_text != blank -%}
+          <span class="crumb-footer__trust-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+            {{ section.settings.trust_badge_text }}
+          </span>
+        {%- endif -%}
+      </div>
+
+      {%- if shop_menu != blank and shop_menu.links.size > 0 -%}
+        <div class="crumb-footer__column">
+          <span class="crumb-footer__heading">{{ shop_menu.title | default: 'Shop' }}</span>
+          <nav aria-label="{{ shop_menu.title | default: 'Shop' }}">
+            <ul class="crumb-footer__list" role="list">
+              {%- for link in shop_menu.links -%}
+                <li>
+                  <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </nav>
+        </div>
+      {%- endif -%}
+
+      {%- if story_menu != blank and story_menu.links.size > 0 -%}
+        <div class="crumb-footer__column">
+          <span class="crumb-footer__heading">{{ story_menu.title | default: 'Story' }}</span>
+          <nav aria-label="{{ story_menu.title | default: 'Story' }}">
+            <ul class="crumb-footer__list" role="list">
+              {%- for link in story_menu.links -%}
+                <li>
+                  <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </nav>
+        </div>
+      {%- endif -%}
+
+      <div class="crumb-footer__newsletter">
+        <div class="crumb-footer__newsletter-card">
+          {%- if section.settings.newsletter_heading != blank -%}
+            <span class="crumb-footer__newsletter-heading">{{ section.settings.newsletter_heading }}</span>
+          {%- endif -%}
+          {%- if section.settings.newsletter_text != blank -%}
+            <p class="crumb-footer__newsletter-text">{{ section.settings.newsletter_text }}</p>
+          {%- endif -%}
+
+          {%- form 'customer', class: 'crumb-footer__newsletter-form' -%}
+            <input type="hidden" name="contact[tags]" value="newsletter">
+
+            <div class="crumb-footer__newsletter-row">
+              <label class="visually-hidden" for="CrumbNewsletterEmail-{{ section.id }}">
+                {{ 'blocks.email_signup.label' | t }}
+              </label>
+              <input
+                id="CrumbNewsletterEmail-{{ section.id }}"
+                class="crumb-footer__newsletter-input"
+                type="email"
+                name="contact[email]"
+                autocorrect="off"
+                autocapitalize="off"
+                autocomplete="email"
+                placeholder="{{ 'blocks.email_signup.placeholder' | t }}"
+                required
+                {% if form.errors %}
+                  aria-invalid="true"
+                  aria-describedby="CrumbNewsletterError-{{ section.id }}"
+                {% endif %}
+              >
+              <button type="submit" class="crumb-footer__newsletter-button">
+                {{ section.settings.newsletter_button_label | default: 'actions.sign_up' | t }}
+              </button>
+            </div>
+
+            {%- if form.errors -%}
+              <p id="CrumbNewsletterError-{{ section.id }}" class="crumb-footer__newsletter-message crumb-footer__newsletter-message--error">
+                {{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}
+              </p>
+            {%- elsif form.posted_successfully? -%}
+              <p class="crumb-footer__newsletter-message crumb-footer__newsletter-message--success" role="status">
+                {{ 'blocks.email_signup.success' | t }}
+              </p>
+            {%- endif -%}
+          {%- endform -%}
+        </div>
+      </div>
+    </div>
+
+    <div class="crumb-footer__bottom">
+      <span class="crumb-footer__copyright">
+        &copy; {{ 'now' | date: '%Y' }} {{ brand_name }}.
+        {%- if section.settings.copyright_text != blank %}
+          {{ section.settings.copyright_text }}
+        {%- endif %}
+      </span>
+
+      {%- if shop.enabled_payment_types.size > 0 -%}
+        <ul class="crumb-footer__payment-list" role="list" aria-label="{{ 'blocks.payment_methods' | t }}">
+          {%- for type in shop.enabled_payment_types -%}
+            <li class="crumb-footer__payment-item">
+              {{ type | payment_type_svg_tag: class: 'crumb-footer__payment-icon' }}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+  </div>
+</footer>
+
+{% stylesheet %}
+  .crumb-footer {
+    box-sizing: border-box;
+    margin-top: var(--crumb-space-xl);
+    padding-block: var(--crumb-space-xl) var(--crumb-space-lg);
+    padding-inline: var(--crumb-gutter);
+    background: var(--crumb-surface-container);
+    border-top: var(--crumb-border);
+    font-family: var(--crumb-font-body);
+  }
+
+  .crumb-footer__inner {
+    max-width: var(--crumb-container);
+    margin-inline: auto;
+  }
+
+  .crumb-footer__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--crumb-space-lg);
+    padding-bottom: var(--crumb-space-xl);
+    border-bottom: var(--crumb-border);
+  }
+
+  .crumb-footer__about {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--crumb-space-sm);
+  }
+
+  .crumb-footer__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+    color: var(--crumb-ink);
+    text-decoration: none;
+  }
+
+  .crumb-footer__brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: var(--crumb-mustard);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    transform: rotate(-2deg);
+  }
+
+  .crumb-footer__brand-mark svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .crumb-footer__brand-name {
+    font-family: var(--crumb-font-display);
+    font-size: 1.375rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .crumb-footer__description {
+    max-width: 26rem;
+    margin: 0;
+    color: var(--crumb-ink-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .crumb-footer__trust-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem var(--crumb-space-sm);
+    background: var(--crumb-mustard-soft);
+    color: var(--crumb-on-mustard-soft);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-xs);
+    transform: rotate(-1deg);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .crumb-footer__trust-badge svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+
+  .crumb-footer__column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--crumb-space-sm);
+  }
+
+  .crumb-footer__heading {
+    font-family: var(--crumb-font-display);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .crumb-footer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-footer__link {
+    color: var(--crumb-ink-muted);
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: color var(--crumb-transition);
+  }
+
+  .crumb-footer__link:hover,
+  .crumb-footer__link:focus-visible {
+    color: var(--crumb-primary);
+  }
+
+  /* --- Newsletter --------------------------------------------------------- */
+
+  .crumb-footer__newsletter-card {
+    padding: var(--crumb-space-md);
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-footer__newsletter-heading {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: var(--crumb-font-display);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .crumb-footer__newsletter-text {
+    margin: 0 0 var(--crumb-space-sm);
+    color: var(--crumb-ink-muted);
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .crumb-footer__newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--crumb-space-sm);
+  }
+
+  .crumb-footer__newsletter-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--crumb-space-sm);
+  }
+
+  .crumb-footer__newsletter-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.625rem var(--crumb-space-sm);
+    background: var(--crumb-surface);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    font-family: var(--crumb-font-body);
+    font-size: 0.875rem;
+    transition: box-shadow var(--crumb-transition);
+  }
+
+  .crumb-footer__newsletter-input::placeholder {
+    color: var(--crumb-ink-muted);
+  }
+
+  .crumb-footer__newsletter-input:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-footer__newsletter-button {
+    box-sizing: border-box;
+    padding: 0.625rem var(--crumb-space-md);
+    background: var(--crumb-coral);
+    color: var(--crumb-on-coral);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    font-family: var(--crumb-font-body);
+    font-size: 0.875rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      box-shadow var(--crumb-transition),
+      transform var(--crumb-transition);
+  }
+
+  .crumb-footer__newsletter-button:hover {
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-footer__newsletter-button:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  .crumb-footer__newsletter-button:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-footer__newsletter-message {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .crumb-footer__newsletter-message--success {
+    color: var(--crumb-mint);
+  }
+
+  .crumb-footer__newsletter-message--error {
+    color: var(--crumb-primary);
+  }
+
+  /* --- Bottom row ---------------------------------------------------------- */
+
+  .crumb-footer__bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--crumb-space-sm);
+    padding-top: var(--crumb-space-lg);
+  }
+
+  .crumb-footer__copyright {
+    color: var(--crumb-ink-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .crumb-footer__payment-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-footer__payment-item {
+    display: flex;
+  }
+
+  .crumb-footer__payment-icon {
+    height: 1.25rem;
+    width: auto;
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-sm);
+  }
+
+  @media screen and (min-width: 750px) {
+    .crumb-footer__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .crumb-footer__about {
+      grid-column: 1 / -1;
+    }
+
+    .crumb-footer__bottom {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .crumb-footer__grid {
+      grid-template-columns: 4fr 2fr 2fr 4fr;
+    }
+
+    .crumb-footer__about {
+      grid-column: auto;
+    }
+
+    .crumb-footer__newsletter-row {
+      flex-direction: row;
+    }
+
+    .crumb-footer__newsletter-input {
+      flex: 1 1 auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-footer * {
+      transition-duration: 0.01ms;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb footer",
+  "class": "crumb-footer-section",
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Brand"
+    },
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand name",
+      "default": "Crumb & Co."
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Your box. Your crumbs. Handcrafted custom snack bundles delivered fresh to your doorstep weekly."
+    },
+    {
+      "type": "text",
+      "id": "trust_badge_text",
+      "label": "Trust badge text",
+      "info": "Leave blank to hide.",
+      "default": "100% Real Pantry Goodness"
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "link_list",
+      "id": "shop_menu",
+      "label": "Shop menu"
+    },
+    {
+      "type": "link_list",
+      "id": "story_menu",
+      "label": "Story menu"
+    },
+    {
+      "type": "header",
+      "content": "Newsletter"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_heading",
+      "label": "Heading",
+      "default": "Join The Crumb Club"
+    },
+    {
+      "type": "textarea",
+      "id": "newsletter_text",
+      "label": "Text",
+      "default": "Get secret recipe drops and 15% off your first box builder."
+    },
+    {
+      "type": "text",
+      "id": "newsletter_button_label",
+      "label": "Button label",
+      "info": "Leave blank to use the default \"Sign up\" label.",
+      "default": "Snack In"
+    },
+    {
+      "type": "header",
+      "content": "Bottom row"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "info": "Shown after the auto-generated \"© {year} {brand name}\".",
+      "default": "Hand-baked joy."
+    }
+  ]
+}
+{% endschema %}
