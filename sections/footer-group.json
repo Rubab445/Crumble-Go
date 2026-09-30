@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "type": "footer",
   "name": "t:names.footer",
@@ -8,6 +17,8 @@
         "brand_name": "Crumb & Co.",
         "description": "Your box. Your crumbs. Handcrafted custom snack bundles delivered fresh to your doorstep weekly.",
         "trust_badge_text": "100% Real Pantry Goodness",
+        "shop_menu": "footer",
+        "story_menu": "footer-story",
         "newsletter_heading": "Join The Crumb Club",
         "newsletter_text": "Get secret recipe drops and 15% off your first box builder.",
         "newsletter_button_label": "Snack In",
