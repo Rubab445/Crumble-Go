@@ -11,7 +11,7 @@
   "current": {
     "logo_height": 36,
     "logo_height_mobile": 28,
-    "page_text_color": "{{ settings.color_palette.foreground }}",
+    "page_text_color": "#1B1B1C",
     "type_body_font": "inter_n4",
     "type_subheading_font": "inter_n5",
     "type_heading_font": "inter_n7",
@@ -108,7 +108,9 @@
       "foreground": "#000000",
       "color1": "#333333",
       "color2": "#dfdfdf",
-      "color3": "#af170b"
+      "color3": "#af170b",
+      "color4": "#982fa7",
+      "color5": "#896211"
     }
   },
   "presets": {
