@@ -1,0 +1,686 @@
+
+
+{%- liquid
+  assign menu = section.settings.menu
+  assign badge_text = section.settings.badge_text
+  assign brand_name = section.settings.brand_name | default: shop.name
+  assign use_cart_drawer = false
+  if settings.cart_type == 'drawer' and template.name != 'cart'
+    assign use_cart_drawer = true
+  endif
+-%}
+
+<script
+  type="module"
+  src="{{ 'cart-icon.js' | asset_url }}"
+  fetchpriority="low"
+></script>
+<script
+  type="module"
+  src="{{ 'crumb-header.js' | asset_url }}"
+></script>
+
+{%- capture cart_content -%}
+  <cart-icon class="crumb-header__cart-icon">
+    <span class="svg-wrapper" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </span>
+    <span class="crumb-header__cart-label">{{ 'content.cart_title' | t }}</span>
+    {% render 'cart-bubble', limit: 100 %}
+  </cart-icon>
+{%- endcapture -%}
+
+<header
+  class="crumb-header"
+  data-crumb-header
+>
+  <div class="crumb-header__inner">
+    <div class="crumb-header__start">
+      <button
+        type="button"
+        class="crumb-header__icon-button crumb-header__menu-button"
+        aria-haspopup="dialog"
+        aria-controls="crumb-menu-drawer"
+        aria-expanded="false"
+        aria-label="{{ 'accessibility.menu' | t }}"
+        data-crumb-drawer-open
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+      </button>
+
+      <a
+        class="crumb-header__brand"
+        href="{{ routes.root_url }}"
+        aria-label="{{ 'accessibility.home_logo_alt' | t: store_name: brand_name }}"
+      >
+        <span class="crumb-header__brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+        </span>
+        <span class="crumb-header__brand-text">
+          <span class="crumb-header__brand-name">{{ brand_name }}</span>
+          {%- if section.settings.brand_tagline != blank -%}
+            <span class="crumb-header__brand-tagline">{{ section.settings.brand_tagline }}</span>
+          {%- endif -%}
+        </span>
+      </a>
+
+      {%- if menu != blank and menu.links.size > 0 -%}
+        <nav
+          class="crumb-header__nav"
+          aria-label="{{ 'accessibility.header_navigation_label' | t }}"
+        >
+          <ul class="crumb-header__list" role="list">
+            {%- for link in menu.links -%}
+              <li>
+                <a
+                  class="crumb-header__link"
+                  href="{{ link.url }}"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- link.title -}}
+                  {%- if forloop.first and badge_text != blank -%}
+                    <span class="crumb-header__badge">{{ badge_text }}</span>
+                  {%- endif -%}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </nav>
+      {%- endif -%}
+    </div>
+
+    <div class="crumb-header__end">
+      {%- if section.settings.show_search -%}
+        <button
+          type="button"
+          class="crumb-header__icon-button"
+          on:click="#search-modal/showDialog"
+          aria-haspopup="dialog"
+          aria-label="{{ 'content.search_input_label' | t }}"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+      {%- endif -%}
+
+      {%- if use_cart_drawer -%}
+        <button
+          type="button"
+          class="crumb-header__cart"
+          on:click="#cart-drawer/toggle"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-controls="cart-drawer"
+          aria-label="{{ 'accessibility.cart' | t }}"
+          aria-describedby="cart-bubble-text"
+          data-testid="cart-drawer-trigger"
+        >
+          {{- cart_content -}}
+        </button>
+      {%- else -%}
+        <a
+          class="crumb-header__cart"
+          href="{{ routes.cart_url }}"
+          aria-label="{{ 'accessibility.cart' | t }}"
+          aria-describedby="cart-bubble-text"
+        >
+          {{- cart_content -}}
+        </a>
+      {%- endif -%}
+
+      {%- if section.settings.show_account and shop.customer_accounts_enabled -%}
+        <a
+          class="crumb-header__icon-button crumb-header__account"
+          href="{{ routes.account_url }}"
+          aria-label="{{ 'accessibility.account' | t }}"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</header>
+
+<dialog
+  id="crumb-menu-drawer"
+  class="crumb-drawer"
+  aria-label="{{ 'accessibility.menu' | t }}"
+  data-crumb-drawer
+>
+  <div class="crumb-drawer__panel">
+    <div class="crumb-drawer__head">
+      <span class="crumb-drawer__title">{{ brand_name }}</span>
+      <button
+        type="button"
+        class="crumb-header__icon-button"
+        aria-label="{{ 'actions.close' | t }}"
+        data-crumb-drawer-close
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    {%- if menu != blank and menu.links.size > 0 -%}
+      <nav aria-label="{{ 'accessibility.header_navigation_label' | t }}">
+        <ul class="crumb-drawer__list" role="list">
+          {%- for link in menu.links -%}
+            <li>
+              <a
+                class="crumb-drawer__link"
+                href="{{ link.url }}"
+                {% if link.current %}
+                  aria-current="page"
+                {% endif %}
+              >
+                {{- link.title -}}
+                {%- if forloop.first and badge_text != blank -%}
+                  <span class="crumb-header__badge">{{ badge_text }}</span>
+                {%- endif -%}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+  </div>
+</dialog>
+
+{% stylesheet %}
+  /* Layout hooks Horizon's hero, product page and cart summary read.
+     Static on purpose: the bar has a fixed height, and Horizon's header.js is not loaded. */
+  :root {
+    --crumb-header-pad: var(--crumb-space-sm);
+  }
+
+  body {
+    --header-height: calc(var(--crumb-header-height) + var(--crumb-header-pad) * 2);
+    --header-group-height: var(--header-height);
+    --transparent-header-offset-boolean: 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    :root {
+      --crumb-header-pad: var(--crumb-space-xs);
+    }
+  }
+
+  /* Sticky: the section wrapper sticks, so the header group must not be its containing block. */
+  #header-group:has(> .crumb-header-section) {
+    display: contents;
+  }
+
+  .crumb-header-section {
+    position: sticky;
+    top: 0;
+    z-index: var(--layer-menu-drawer);
+  }
+
+  .crumb-header {
+    box-sizing: border-box;
+    padding: var(--crumb-header-pad) var(--crumb-gutter);
+    font-family: var(--crumb-font-body);
+  }
+
+  .crumb-header__inner {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--crumb-space-md);
+    width: 100%;
+    max-width: var(--crumb-container);
+    height: var(--crumb-header-height);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter);
+    background: var(--crumb-surface-lowest);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-header__start,
+  .crumb-header__end {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .crumb-header__start {
+    gap: var(--crumb-space-lg);
+  }
+
+  .crumb-header__end {
+    gap: var(--crumb-space-sm);
+    flex-shrink: 0;
+  }
+
+  /* --- Brand ------------------------------------------------------------ */
+
+  .crumb-header__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .crumb-header__brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--crumb-coral);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    transform: rotate(-3deg);
+    transition: transform var(--crumb-transition);
+  }
+
+  .crumb-header__brand-mark svg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  @media (hover: hover) {
+    .crumb-header__brand:hover .crumb-header__brand-mark {
+      transform: rotate(0);
+    }
+  }
+
+  .crumb-header__brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .crumb-header__brand-name {
+    font-family: var(--crumb-font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .crumb-header__brand-tagline {
+    color: var(--crumb-primary);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* --- Desktop navigation ---------------------------------------------- */
+
+  .crumb-header__nav {
+    display: none;
+  }
+
+  .crumb-header__list {
+    display: flex;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-header__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: var(--crumb-space-xs) var(--crumb-space-md);
+    color: var(--crumb-ink-muted);
+    border: 2px solid transparent;
+    border-radius: var(--crumb-radius-md);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition:
+      background-color var(--crumb-transition),
+      border-color var(--crumb-transition),
+      color var(--crumb-transition);
+  }
+
+  .crumb-header__link:hover {
+    background: var(--crumb-surface-low);
+    border-color: var(--crumb-ink);
+    color: var(--crumb-ink);
+  }
+
+  .crumb-header__link[aria-current='page'] {
+    background: var(--crumb-mustard-soft);
+    color: var(--crumb-on-mustard-soft);
+  }
+
+  .crumb-header__badge {
+    padding: 2px 0.375rem;
+    background: var(--crumb-mustard);
+    color: var(--crumb-on-mustard);
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-xs);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transform: rotate(2deg);
+  }
+
+  @media screen and (min-width: 990px) {
+    .crumb-header__nav {
+      display: block;
+    }
+
+    .crumb-header__menu-button {
+      display: none;
+    }
+  }
+
+  /* --- Icon buttons and cart ------------------------------------------- */
+
+  .crumb-header__icon-button,
+  .crumb-header__cart {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    background: var(--crumb-surface-lowest);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      box-shadow var(--crumb-transition),
+      transform var(--crumb-transition);
+  }
+
+  .crumb-header__icon-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .crumb-header__icon-button:hover {
+    box-shadow: 3px 3px 0 var(--crumb-ink);
+  }
+
+  .crumb-header__icon-button:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  .crumb-header__cart {
+    padding-inline: var(--crumb-space-md);
+    background: var(--crumb-coral);
+    color: var(--crumb-on-coral);
+    box-shadow: var(--crumb-shadow-md);
+    --cart-bubble-background: var(--crumb-mustard);
+    --cart-bubble-text: var(--crumb-ink);
+  }
+
+  .crumb-header__cart:hover {
+    box-shadow: var(--crumb-shadow-lg);
+  }
+
+  .crumb-header__cart:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(4px, 4px);
+  }
+
+  .crumb-header__cart-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+  }
+
+  .crumb-header__cart-icon .svg-wrapper {
+    display: flex;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .crumb-header__cart-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .crumb-header__cart-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .crumb-header__cart .cart-bubble {
+    border: 1.5px solid var(--crumb-ink);
+    font-size: 0.6875rem;
+    font-weight: 800;
+  }
+
+  .crumb-header__account {
+    display: none;
+  }
+
+  @media screen and (min-width: 990px) {
+    .crumb-header__account {
+      display: inline-flex;
+    }
+  }
+
+  .crumb-header :is(a, button):focus-visible,
+  .crumb-drawer :is(a, button):focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  /* --- Phones: compact bar, cart is icon + count only -------------------- */
+
+  @media screen and (max-width: 749px) {
+    .crumb-header {
+      padding-inline: var(--crumb-gutter-mobile);
+    }
+
+    .crumb-header__inner {
+      gap: var(--crumb-space-xs);
+      padding-inline: var(--crumb-space-sm);
+      box-shadow: var(--crumb-shadow-sm);
+    }
+
+    .crumb-header__start {
+      gap: var(--crumb-space-xs);
+    }
+
+    .crumb-header__brand-mark {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .crumb-header__brand-mark svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    .crumb-header__brand-name {
+      font-size: 1.25rem;
+    }
+
+    .crumb-header__brand-tagline,
+    .crumb-header__cart-label {
+      display: none;
+    }
+
+    .crumb-header__cart {
+      padding-inline: var(--crumb-space-sm);
+      box-shadow: var(--crumb-shadow-sm);
+    }
+  }
+
+  /* --- Mobile menu drawer (native <dialog>) ------------------------------ */
+
+  .crumb-drawer {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--crumb-ink);
+  }
+
+  .crumb-drawer::backdrop {
+    background: rgb(27 27 28 / 0.5);
+  }
+
+  body:has(.crumb-drawer[open]) {
+    overflow: hidden;
+  }
+
+  .crumb-drawer__panel {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--crumb-space-lg);
+    width: min(22rem, 100% - 2.5rem);
+    height: 100%;
+    padding: var(--crumb-space-md);
+    background: var(--crumb-surface);
+    border-inline-end: var(--crumb-border);
+    box-shadow: var(--crumb-shadow-overlay);
+    font-family: var(--crumb-font-body);
+    overflow-y: auto;
+  }
+
+  .crumb-drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--crumb-space-md);
+  }
+
+  .crumb-drawer__title {
+    font-family: var(--crumb-font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .crumb-drawer__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--crumb-space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-drawer__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--crumb-space-sm);
+    min-height: 3rem;
+    padding: var(--crumb-space-sm) var(--crumb-space-md);
+    background: var(--crumb-surface-lowest);
+    color: var(--crumb-ink);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .crumb-drawer__link[aria-current='page'] {
+    background: var(--crumb-mustard-soft);
+    color: var(--crumb-on-mustard-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-header *,
+    .crumb-drawer * {
+      transition-duration: 0.01ms;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb header",
+  "class": "crumb-header-section",
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Brand"
+    },
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand name",
+      "default": "Crumb & Co."
+    },
+    {
+      "type": "text",
+      "id": "brand_tagline",
+      "label": "Tagline",
+      "info": "Small red line under the brand name. Leave blank to hide.",
+      "default": "Snack Crafters"
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Sticker on first menu link",
+      "info": "Leave blank to hide.",
+      "default": "Make Your Own"
+    },
+    {
+      "type": "header",
+      "content": "Actions"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Show account link (desktop)",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,170 @@
+{%- doc -%}
+  Crumb & Co. mobile bottom navigation bar.
+  Shown below 750px only. Rendered once in layout/theme.liquid.
+
+  Tabs: the first three links of the "main-menu" menu (Build a Box, All Items, About), then Account.
+  - Labels and URLs come from the menu, so the merchant edits them in Content > Menus.
+  - Search and cart live in the header's top bar, so they are not repeated here.
+  - Uses only Horizon's existing translation keys, so no locale files change.
+
+  @example
+  {% render 'crumb-mobile-nav' %}
+{%- enddoc -%}
+
+{%- liquid
+  assign menu_links = linklists['main-menu'].links
+  assign is_account = false
+  if request.page_type contains 'customers'
+    assign is_account = true
+  endif
+-%}
+
+<nav
+  class="crumb-mobile-nav"
+  aria-label="{{ 'accessibility.header_navigation_label' | t }}"
+>
+  <ul class="crumb-mobile-nav__list" role="list">
+    {%- for link in menu_links limit: 3 -%}
+      <li>
+        <a
+          class="crumb-mobile-nav__item"
+          href="{{ link.url }}"
+          {% if link.current %}
+            aria-current="page"
+          {% endif %}
+        >
+          <span class="svg-wrapper" aria-hidden="true">
+            {%- case forloop.index -%}
+              {%- when 1 -%}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>
+              {%- when 2 -%}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 9.5 4.5 4h15L21 9.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-6h6v6"/></svg>
+              {%- else -%}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.01"/></svg>
+            {%- endcase -%}
+          </span>
+          <span class="crumb-mobile-nav__label">{{ link.title }}</span>
+        </a>
+      </li>
+    {%- endfor -%}
+    <li>
+      <a
+        class="crumb-mobile-nav__item"
+        href="{{ routes.account_url }}"
+        {% if is_account %}
+          aria-current="page"
+        {% endif %}
+      >
+        <span class="svg-wrapper" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        </span>
+        <span class="crumb-mobile-nav__label">{{ 'content.account_title' | t }}</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+{% stylesheet %}
+  .crumb-mobile-nav {
+    display: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .crumb-mobile-nav {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: var(--layer-sticky);
+      display: block;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgb(252 249 248 / 0.94);
+      border-top: var(--crumb-border);
+      backdrop-filter: blur(12px);
+    }
+
+    body {
+      padding-bottom: calc(var(--crumb-mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .crumb-mobile-nav__list {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      height: var(--crumb-mobile-nav-height);
+      margin: 0;
+      padding: 0 var(--crumb-space-xs);
+      list-style: none;
+    }
+
+    .crumb-mobile-nav__list > li {
+      flex: 1 1 0;
+      display: flex;
+    }
+
+    .crumb-mobile-nav__item {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 0;
+      color: var(--crumb-ink-muted);
+      font-family: var(--crumb-font-body);
+      text-decoration: none;
+      transition: color var(--crumb-transition);
+    }
+
+    .crumb-mobile-nav__item .svg-wrapper {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .crumb-mobile-nav__item svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .crumb-mobile-nav__label {
+      max-width: 100%;
+      overflow: hidden;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      line-height: 0.875rem;
+      letter-spacing: 0.04em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .crumb-mobile-nav__item[aria-current='page'] {
+      color: var(--crumb-primary);
+    }
+
+    .crumb-mobile-nav__item[aria-current='page']::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 2rem;
+      height: 3px;
+      background: var(--crumb-primary);
+    }
+
+    .crumb-mobile-nav__item:active {
+      color: var(--crumb-ink);
+    }
+
+    .crumb-mobile-nav__item:focus-visible {
+      outline: 3px solid var(--crumb-primary);
+      outline-offset: -3px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-mobile-nav__item {
+      transition: none;
+    }
+  }
+{% endstylesheet %}

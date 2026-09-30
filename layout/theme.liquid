@@ -30,6 +30,7 @@
     {% endif %}
 
     {{ content_for_header }}
+    {{ 'crumb-tokens.css' | asset_url | stylesheet_tag }}
   </head>
 
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
@@ -173,5 +174,8 @@
     {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add-modal' %}
     {% endif %}
+    {% render 'crumb-mobile-nav' %}
+
+    {% render 'cart-drawer', render_wrapper: true %}
   </body>
 </html>

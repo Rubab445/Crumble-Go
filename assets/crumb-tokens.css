@@ -1,0 +1,68 @@
+
+:root {
+  /* Surfaces */
+  --crumb-surface: #fcf9f8;
+  --crumb-surface-lowest: #ffffff;
+  --crumb-surface-low: #f6f3f2;
+  --crumb-surface-container: #f0eded;
+  --crumb-surface-highest: #e5e2e1;
+
+  /* Ink (text + structural lines). Never pure black. */
+  --crumb-ink: #1b1b1c;
+  --crumb-ink-muted: #5a403f;
+
+  /* Brand accents */
+  --crumb-primary: #b52330;
+  --crumb-coral: #ff5a5f;
+  --crumb-mustard: #ffb702;
+  --crumb-mustard-soft: #ffdea9;
+  --crumb-mint: #04a59d;
+
+  /* Text colours that sit on the accents above (contrast-checked, WCAG AA) */
+  --crumb-on-coral: var(--crumb-ink); /* 5.64:1. White on coral is only 3.05:1. */
+  --crumb-on-mustard: #6b4b00; /* 4.57:1 */
+  --crumb-on-mustard-soft: #271900; /* 13.28:1 */
+
+  /* Typography: reads Horizon's Typography settings, so fonts are set in one place */
+  --crumb-font-display: var(--font-heading--family);
+  --crumb-font-body: var(--font-body--family);
+
+  /* Spacing */
+  --crumb-space-xs: 0.25rem;
+  --crumb-space-sm: 0.5rem;
+  --crumb-space-md: 1rem;
+  --crumb-space-lg: 1.5rem;
+  --crumb-space-xl: 2.5rem;
+  --crumb-gutter: 1.5rem;
+  --crumb-gutter-mobile: 0.75rem;
+  --crumb-container: 80rem; /* 1280px */
+
+  /* Shape (values taken from the mockup's Tailwind config, not DESIGN.md prose) */
+  --crumb-radius-sm: 0.25rem;
+  --crumb-radius-md: 0.5rem;
+  --crumb-radius-lg: 0.75rem;
+  --crumb-radius-full: 9999px;
+
+  /* Neo-brutalist depth: 2px ink stroke + hard, zero-blur offset shadows */
+  --crumb-border: 2px solid var(--crumb-ink);
+  --crumb-shadow-xs: 1px 1px 0 var(--crumb-ink);
+  --crumb-shadow-sm: 2px 2px 0 var(--crumb-ink);
+  --crumb-shadow-md: 4px 4px 0 var(--crumb-ink);
+  --crumb-shadow-lg: 5px 5px 0 var(--crumb-ink);
+  --crumb-shadow-overlay: 8px 8px 0 var(--crumb-ink);
+  --crumb-shadow-none: 0 0 0 var(--crumb-ink);
+
+  /* Motion */
+  --crumb-transition: 120ms cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout hooks */
+  --crumb-header-height: 5rem;
+  --crumb-mobile-nav-height: 4rem;
+}
+
+@media screen and (max-width: 749px) {
+  :root {
+    --crumb-gutter: var(--crumb-gutter-mobile);
+    --crumb-header-height: 4rem;
+  }
+}
