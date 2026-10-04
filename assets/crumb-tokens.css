@@ -5,31 +5,11 @@
    ========================================================================== */
 
 :root {
-  /* Surfaces */
-  --crumb-surface: #fcf9f8;
-  --crumb-surface-lowest: #ffffff;
-  --crumb-surface-low: #f6f3f2;
-  --crumb-surface-container: #f0eded;
-  --crumb-surface-highest: #e5e2e1;
-
-  /* Ink (text + structural lines). Never pure black. */
-  --crumb-ink: #1b1b1c;
-  --crumb-ink-muted: #5a403f;
-
-  /* Brand accents */
-  --crumb-primary: #b52330;
-  --crumb-coral: #ff5a5f;
-  --crumb-mustard: #ffb702;
-  --crumb-mustard-soft: #ffdea9;
-  --crumb-mint: #04a59d;
-
-  /* Text colours that sit on the accents above (contrast-checked, WCAG AA) */
-  --crumb-on-coral: var(--crumb-ink);
-  /* 5.64:1. White on coral is only 3.05:1. */
-  --crumb-on-mustard: #6b4b00;
-  /* 4.57:1 */
-  --crumb-on-mustard-soft: #271900;
-  /* 13.28:1 */
+    /* Colors (--crumb-surface*, --crumb-ink*, --crumb-primary, --crumb-coral,
+     --crumb-mustard*, --crumb-mint, --crumb-on-*) are NOT defined here.
+     They come from Theme settings > Crumb colors, rendered as :root custom
+     properties by snippets/crumb-color-vars.liquid. That keeps every color
+     retunable from the theme editor's color pickers instead of a code edit. */
 
   /* Typography: reads Horizon's Typography settings, so fonts are set in one place */
   --crumb-font-display: var(--font-heading--family);
@@ -39,7 +19,7 @@
   --crumb-space-xs: 0.25rem;
   --crumb-space-sm: 0.5rem;
   --crumb-space-md: 1rem;
-  --crumb-header-space: 10.5rem;
+  --crumb-header-space: 4rem;
   --crumb-space-lg: 1.5rem;
   --crumb-space-xl: 2.5rem;
   --crumb-gutter: 1.5rem;

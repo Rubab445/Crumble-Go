@@ -1,0 +1,29 @@
+{%- doc -%}
+  Crumb & Co. color variables.
+  Outputs the --crumb-* color custom properties from Theme settings > Crumb colors,
+  so retuning the palette is a theme-editor color picker, not a code edit.
+  Rendered once in layout/theme.liquid, after crumb-tokens.css so these win the cascade.
+  Non-color tokens (spacing, radius, shadows, motion) stay static in crumb-tokens.css.
+{%- enddoc -%}
+
+{%- style -%}
+  :root {
+    --crumb-surface: {{ settings.crumb_surface }};
+    --crumb-surface-lowest: {{ settings.crumb_surface_lowest }};
+    --crumb-surface-low: {{ settings.crumb_surface_low }};
+    --crumb-surface-container: {{ settings.crumb_surface_container }};
+
+    --crumb-ink: {{ settings.crumb_ink }};
+    --crumb-ink-muted: {{ settings.crumb_ink_muted }};
+
+    --crumb-primary: {{ settings.crumb_primary }};
+    --crumb-coral: {{ settings.crumb_coral }};
+    --crumb-mustard: {{ settings.crumb_mustard }};
+    --crumb-mustard-soft: {{ settings.crumb_mustard_soft }};
+    --crumb-mint: {{ settings.crumb_mint }};
+
+    --crumb-on-coral: {{ settings.crumb_on_coral }};
+    --crumb-on-mustard: {{ settings.crumb_on_mustard }};
+    --crumb-on-mustard-soft: {{ settings.crumb_on_mustard_soft }};
+  }
+{%- endstyle -%}

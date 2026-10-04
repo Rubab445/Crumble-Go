@@ -17,9 +17,10 @@
         "brand_name": "Crumb & Co.",
         "brand_tagline": "Snack Crafters",
         "menu": "main-menu",
+        "show_account": true,
         "badge_text": "Make Your Own",
+        "status_chip_text": "Kitchen Live \u00b7 USD $",
         "show_search": true,
-        "show_account": true
       }
     }
   },

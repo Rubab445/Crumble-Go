@@ -8,6 +8,33 @@
     "theme_support_url": "https://support.shopify.com/"
   },
   {
+  "name": "Crumb colors",
+  "settings": [
+    { "type": "header", "content": "Surfaces" },
+    { "type": "color", "id": "crumb_surface", "label": "Page background", "default": "#fcf9f8" },
+    { "type": "color", "id": "crumb_surface_lowest", "label": "Card background", "default": "#ffffff" },
+    { "type": "color", "id": "crumb_surface_low", "label": "Hover surface", "default": "#f6f3f2" },
+    { "type": "color", "id": "crumb_surface_container", "label": "Footer background", "default": "#f0eded" },
+    { "type": "header", "content": "Ink" },
+    { "type": "color", "id": "crumb_ink", "label": "Ink (borders, headings, shadows)", "default": "#1b1b1c" },
+    { "type": "color", "id": "crumb_ink_muted", "label": "Muted text", "default": "#5a403f" },
+    { "type": "header", "content": "Brand accents" },
+    { "type": "color", "id": "crumb_primary", "label": "Primary (links, focus ring)", "default": "#b52330" },
+    { "type": "color", "id": "crumb_coral", "label": "Coral (cart button, brand mark)", "default": "#ff5a5f" },
+    { "type": "color", "id": "crumb_mustard", "label": "Mustard (badges, cart count)", "default": "#ffb702" },
+    { "type": "color", "id": "crumb_mustard_soft", "label": "Mustard soft (active nav state)", "default": "#ffdea9" },
+    { "type": "color", "id": "crumb_mint", "label": "Mint (success states)", "default": "#04a59d" },
+    {
+      "type": "header",
+      "content": "Text on accents",
+      "info": "Kept separate so contrast can be fixed by hand if an accent above is changed to something lighter or darker."
+    },
+    { "type": "color", "id": "crumb_on_coral", "label": "Text on coral", "default": "#1b1b1c" },
+    { "type": "color", "id": "crumb_on_mustard", "label": "Text on mustard", "default": "#6b4b00" },
+    { "type": "color", "id": "crumb_on_mustard_soft", "label": "Text on mustard soft", "default": "#271900" }
+  ]
+},
+  {
     "name": "t:names.logo_and_favicon",
     "settings": [
       {

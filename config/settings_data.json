@@ -111,8 +111,21 @@
       "color3": "#af170b",
       "color4": "#982fa7",
       "color5": "{{ settings.color_palette.color4 }}"
-    }
+    },
+    "sections": {
+  "crumb-mobile-nav": {
+    "type": "crumb-mobile-nav",
+    "blocks": {
+      "shop": { "type": "shop", "settings": { "label": "Shop", "url": "shopify://collections/all" } },
+      "build_box": { "type": "build_box", "settings": { "label": "Build Box" } },
+      "search": { "type": "search", "settings": { "label": "Search" } },
+      "account": { "type": "account", "settings": { "label": "Account" } }
+    },
+    "block_order": ["shop", "build_box", "search", "account"]
+  }
+},
   },
+  
   "presets": {
     "Horizon": {
       "logo_height": 36,

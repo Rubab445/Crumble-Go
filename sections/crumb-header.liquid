@@ -111,10 +111,14 @@
     </div>
 
     <div class="crumb-header__end">
+      {%- if section.settings.status_chip_text != blank -%}
+        <span class="crumb-header__status-chip">{{ section.settings.status_chip_text }}</span>
+      {%- endif -%}
+
       {%- if section.settings.show_search -%}
         <button
           type="button"
-          class="crumb-header__icon-button"
+          class="crumb-header__icon-button crumb-header__search"
           on:click="#search-modal/showDialog"
           aria-haspopup="dialog"
           aria-label="{{ 'content.search_input_label' | t }}"
@@ -304,7 +308,7 @@
   }
 
   .crumb-header__end {
-    gap: var(--crumb-space-sm);
+    gap: var(--crumb-space-md);
     flex-shrink: 0;
   }
 
@@ -410,7 +414,6 @@
   }
 
   .crumb-header__link[aria-current='page'] {
-    background: var(--crumb-mustard-soft);
     color: var(--crumb-on-mustard-soft);
   }
 
@@ -439,6 +442,25 @@
     }
   }
 
+  .crumb-header__status-chip {
+    display: none;
+    padding: 0.25rem 0.625rem;
+    background: var(--crumb-surface-low);
+    color: var(--crumb-ink-muted);
+    border: 2px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  @media screen and (min-width: 1200px) {
+    .crumb-header__status-chip {
+      display: inline-flex;
+      align-items: center;
+    }
+  }
   /* --- Icon buttons and cart ------------------------------------------- */
 
   .crumb-header__icon-button,
@@ -578,6 +600,10 @@
       padding-inline: var(--crumb-space-sm);
       box-shadow: var(--crumb-shadow-sm);
     }
+    .crumb-header__menu-button,
+    .crumb-header__search {
+      display: none;
+    }
   }
 
   /* --- Mobile menu drawer (native <dialog>) ------------------------------ */
@@ -712,6 +738,17 @@
       "label": "Sticker on first menu link",
       "info": "Leave blank to hide.",
       "default": "Make Your Own"
+    },
+        {
+      "type": "header",
+      "content": "Status chip"
+    },
+    {
+      "type": "text",
+      "id": "status_chip_text",
+      "label": "Status chip text",
+      "info": "Plain editable text, shown from 1200px screens up. Leave blank to hide. Does not read live order/currency data.",
+      "default": "Kitchen Live \u00b7 USD $"
     },
     {
       "type": "header",

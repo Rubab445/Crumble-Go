@@ -4,6 +4,8 @@
   assign brand_name = section.settings.brand_name | default: shop.name
 -%}
 
+<script type="module" src="{{ 'crumb-footer-newsletter.js' | asset_url }}"></script>
+
 <footer class="crumb-footer">
   <div class="crumb-footer__inner">
     <div class="crumb-footer__grid">
@@ -49,33 +51,59 @@
       </div>
 
       {%- if shop_menu != blank and shop_menu.links.size > 0 -%}
-        <div class="crumb-footer__column">
-          <span class="crumb-footer__heading">{{ shop_menu.title | default: 'Shop' }}</span>
-          <nav aria-label="{{ shop_menu.title | default: 'Shop' }}">
-            <ul class="crumb-footer__list" role="list">
-              {%- for link in shop_menu.links -%}
-                <li>
-                  <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
-                </li>
-              {%- endfor -%}
-            </ul>
-          </nav>
-        </div>
+        {%- capture shop_accordion -%}
+          <details class="crumb-footer__accordion">
+            <summary class="crumb-footer__heading">
+              <span>{{ shop_menu.title | default: 'Shop' }}</span>
+              <span class="svg-wrapper icon-animated" aria-hidden="true">{{ 'icon-caret.svg' | inline_asset_content }}</span>
+            </summary>
+            <nav class="details-content" aria-label="{{ shop_menu.title | default: 'Shop' }}">
+              <ul class="crumb-footer__list" role="list">
+                {%- for link in shop_menu.links -%}
+                  <li>
+                    <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </nav>
+          </details>
+        {%- endcapture -%}
+        {%- render 'accordion-custom-component',
+          children: shop_accordion,
+          class: 'crumb-footer__column',
+          disable_on_desktop: true,
+          open_by_default_on_desktop: true,
+          disable_on_mobile: false,
+          open_by_default_on_mobile: false
+        -%}
       {%- endif -%}
 
       {%- if story_menu != blank and story_menu.links.size > 0 -%}
-        <div class="crumb-footer__column">
-          <span class="crumb-footer__heading">{{ story_menu.title | default: 'Story' }}</span>
-          <nav aria-label="{{ story_menu.title | default: 'Story' }}">
-            <ul class="crumb-footer__list" role="list">
-              {%- for link in story_menu.links -%}
-                <li>
-                  <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
-                </li>
-              {%- endfor -%}
-            </ul>
-          </nav>
-        </div>
+        {%- capture story_accordion -%}
+          <details class="crumb-footer__accordion">
+            <summary class="crumb-footer__heading">
+              <span>{{ story_menu.title | default: 'Story' }}</span>
+              <span class="svg-wrapper icon-animated" aria-hidden="true">{{ 'icon-caret.svg' | inline_asset_content }}</span>
+            </summary>
+            <nav class="details-content" aria-label="{{ story_menu.title | default: 'Story' }}">
+              <ul class="crumb-footer__list" role="list">
+                {%- for link in story_menu.links -%}
+                  <li>
+                    <a class="crumb-footer__link" href="{{ link.url }}">{{ link.title }}</a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </nav>
+          </details>
+        {%- endcapture -%}
+        {%- render 'accordion-custom-component',
+          children: story_accordion,
+          class: 'crumb-footer__column',
+          disable_on_desktop: true,
+          open_by_default_on_desktop: true,
+          disable_on_mobile: false,
+          open_by_default_on_mobile: false
+        -%}
       {%- endif -%}
 
       <div class="crumb-footer__newsletter">
@@ -87,50 +115,48 @@
             <p class="crumb-footer__newsletter-text">{{ section.settings.newsletter_text }}</p>
           {%- endif -%}
 
-          {%- form 'customer', class: 'crumb-footer__newsletter-form' -%}
+          {%- form 'customer', class: 'crumb-footer__newsletter-form', data-crumb-newsletter-form: true -%}
             <input type="hidden" name="contact[tags]" value="newsletter">
 
-            <div class="crumb-footer__newsletter-row">
-              <label class="visually-hidden" for="CrumbNewsletterEmail-{{ section.id }}">
-                {{ 'blocks.email_signup.label' | t }}
-              </label>
-              <input
-                id="CrumbNewsletterEmail-{{ section.id }}"
-                class="crumb-footer__newsletter-input"
-                type="email"
-                name="contact[email]"
-                autocorrect="off"
-                autocapitalize="off"
-                autocomplete="email"
-                placeholder="{{ 'blocks.email_signup.placeholder' | t }}"
-                required
-                {% if form.errors %}
-                  aria-invalid="true"
-                  aria-describedby="CrumbNewsletterError-{{ section.id }}"
-                {% endif %}
-              >
-              <button type="submit" class="crumb-footer__newsletter-button">
-                {%- if section.settings.newsletter_button_label != blank -%}
-                  {{ section.settings.newsletter_button_label }}
-                {%- else -%}
-                  {{ 'actions.sign_up' | t }}
-                {%- endif -%}
-              </button>
-            </div>
+            <div class="crumb-footer__newsletter-body" aria-live="polite">
+              <div class="crumb-footer__newsletter-row">
+                <label class="visually-hidden" for="CrumbNewsletterEmail-{{ section.id }}">
+                  {{ 'blocks.email_signup.label' | t }}
+                </label>
+                <input
+                  id="CrumbNewsletterEmail-{{ section.id }}"
+                  class="crumb-footer__newsletter-input"
+                  type="email"
+                  name="contact[email]"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  autocomplete="email"
+                  placeholder="{{ 'blocks.email_signup.placeholder' | t }}"
+                  required
+                  {% if form.errors %}
+                    aria-invalid="true"
+                    aria-describedby="CrumbNewsletterError-{{ section.id }}"
+                  {% endif %}
+                >
+                <button type="submit" class="crumb-footer__newsletter-button">
+                  {{ section.settings.newsletter_button_label | default: 'actions.sign_up' | t }}
+                </button>
+              </div>
 
-            {%- if form.errors -%}
-              <p
-                id="CrumbNewsletterError-{{ section.id }}"
-                class="crumb-footer__newsletter-message crumb-footer__newsletter-message--error"
-              >
-                {{ form.errors.translated_fields.email | capitalize }}
-                {{ form.errors.messages.email }}
-              </p>
-            {%- elsif form.posted_successfully? -%}
-              <p class="crumb-footer__newsletter-message crumb-footer__newsletter-message--success" role="status">
-                {{ 'blocks.email_signup.success' | t }}
-              </p>
-            {%- endif -%}
+              {%- if form.errors -%}
+                <p
+                  id="CrumbNewsletterError-{{ section.id }}"
+                  class="crumb-footer__newsletter-message crumb-footer__newsletter-message--error"
+                >
+                  {{ form.errors.translated_fields.email | capitalize }}
+                  {{ form.errors.messages.email }}
+                </p>
+              {%- elsif form.posted_successfully? -%}
+                <p class="crumb-footer__newsletter-message crumb-footer__newsletter-message--success" role="status">
+                  {{ 'blocks.email_signup.success' | t }}
+                </p>
+              {%- endif -%}
+            </div>
           {%- endform -%}
         </div>
       </div>
@@ -261,10 +287,35 @@
   }
 
   .crumb-footer__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--crumb-space-sm);
+    list-style: none;
     font-family: var(--crumb-font-display);
     font-size: 1.0625rem;
     font-weight: 700;
     line-height: 1.2;
+    cursor: pointer;
+  }
+
+  .crumb-footer__heading::-webkit-details-marker {
+    display: none;
+  }
+
+  .crumb-footer__heading .icon-animated svg {
+    width: var(--icon-size-xs, 0.875rem);
+    height: var(--icon-size-xs, 0.875rem);
+  }
+
+  @media screen and (min-width: 750px) {
+    .crumb-footer__heading {
+      cursor: auto;
+    }
+  }
+
+  .crumb-footer__accordion .details-content {
+    margin-block-start: var(--crumb-space-sm);
   }
 
   .crumb-footer__list {
