@@ -4,8 +4,6 @@
   assign brand_name = section.settings.brand_name | default: shop.name
 -%}
 
-<script type="module" src="{{ 'crumb-footer-newsletter.js' | asset_url }}"></script>
-
 <footer class="crumb-footer">
   <div class="crumb-footer__inner">
     <div class="crumb-footer__grid">
@@ -115,7 +113,7 @@
             <p class="crumb-footer__newsletter-text">{{ section.settings.newsletter_text }}</p>
           {%- endif -%}
 
-          {%- form 'customer', class: 'crumb-footer__newsletter-form', data-crumb-newsletter-form: true -%}
+          {%- form 'customer', class: 'crumb-footer__newsletter-form' -%}
             <input type="hidden" name="contact[tags]" value="newsletter">
 
             <div class="crumb-footer__newsletter-body" aria-live="polite">
@@ -139,7 +137,11 @@
                   {% endif %}
                 >
                 <button type="submit" class="crumb-footer__newsletter-button">
-                  {{ section.settings.newsletter_button_label | default: 'actions.sign_up' | t }}
+                  {%- if section.settings.newsletter_button_label != blank -%}
+                    {{ section.settings.newsletter_button_label }}
+                  {%- else -%}
+                    {{ 'actions.sign_up' | t }}
+                  {%- endif -%}
                 </button>
               </div>
 

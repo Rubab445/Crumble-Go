@@ -34,12 +34,26 @@
             <a
               class="crumb-mobile-nav__item"
               href="{{ block.settings.url | default: routes.all_products_collection_url }}"
-              {% if is_current or request.page_type == 'collection' or request.page_type == 'list-collections' or request.page_type == 'product' %}
+              {% if is_current
+                or request.page_type == 'collection'
+                or request.page_type == 'list-collections'
+                or request.page_type == 'product'
+              %}
                 aria-current="page"
               {% endif %}
             >
               <span class="svg-wrapper" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 9.5 4.5 4h15L21 9.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-6h6v6"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path d="M3 9.5 4.5 4h15L21 9.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-6h6v6"/>
+                </svg>
               </span>
               <span class="crumb-mobile-nav__label">{{ label | default: 'Shop' }}</span>
             </a>
@@ -55,7 +69,17 @@
               {% endif %}
             >
               <span class="svg-wrapper" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/>
+                </svg>
               </span>
               <span class="crumb-mobile-nav__label">{{ label | default: 'Build Box' }}</span>
             </a>
@@ -70,9 +94,25 @@
               aria-haspopup="dialog"
             >
               <span class="svg-wrapper" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+                </svg>
               </span>
-              <span class="crumb-mobile-nav__label">{{ label | default: 'content.search' | t }}</span>
+              <span class="crumb-mobile-nav__label">
+                {%- if label != blank -%}
+                  {{ label }}
+                {%- else -%}
+                  {{ 'content.search' | t }}
+                {%- endif -%}
+              </span>
             </button>
           </li>
 
@@ -86,9 +126,25 @@
               {% endif %}
             >
               <span class="svg-wrapper" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+                </svg>
               </span>
-              <span class="crumb-mobile-nav__label">{{ label | default: 'content.account_title' | t }}</span>
+              <span class="crumb-mobile-nav__label">
+                {%- if label != blank -%}
+                  {{ label }}
+                {%- else -%}
+                  {{ 'content.account_title' | t }}
+                {%- endif -%}
+              </span>
             </a>
           </li>
       {%- endcase -%}
@@ -229,16 +285,12 @@
     {
       "type": "search",
       "name": "Search tab",
-      "settings": [
-        { "type": "text", "id": "label", "label": "Label", "default": "Search" }
-      ]
+      "settings": [{ "type": "text", "id": "label", "label": "Label", "default": "Search" }]
     },
     {
       "type": "account",
       "name": "Account tab",
-      "settings": [
-        { "type": "text", "id": "label", "label": "Label", "default": "Account" }
-      ]
+      "settings": [{ "type": "text", "id": "label", "label": "Label", "default": "Account" }]
     }
   ],
   "presets": [
