@@ -123,8 +123,8 @@
     },
     "block_order": ["shop", "build_box", "search", "account"]
   }
+}
 },
-  },
   
   "presets": {
     "Horizon": {
