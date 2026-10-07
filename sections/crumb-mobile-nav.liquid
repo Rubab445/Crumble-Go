@@ -1,0 +1,308 @@
+{% comment %}
+  Crumb & Co. mobile bottom navigation bar.
+  Shown below 750px only. Rendered as a static section in layout/theme.liquid
+  (not a snippet), specifically so each tab is an editable block: label, link,
+  and which of the four fixed roles it plays (Shop / Build Box / Search / Account).
+
+  This replaces an earlier draft that derived tabs from main-menu's first 3 links.
+  That was my own silent call and it dropped Search, which was in spec. Blocks
+  fix that: the four tabs are explicit and the merchant edits them directly,
+  nothing is inferred from an unrelated menu.
+
+  Search and Account blocks are fixed-behavior (search opens Horizon's search
+  modal; Account always links to routes.account_url) with only their label
+  editable. Shop and Build Box are real link blocks.
+{% endcomment %}
+
+<nav
+  class="crumb-mobile-nav"
+  aria-label="{{ 'accessibility.header_navigation_label' | t }}"
+>
+  <ul class="crumb-mobile-nav__list" role="list">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        assign label = block.settings.label
+        assign is_current = false
+        if block.settings.url != blank and block.settings.url == request.path
+          assign is_current = true
+        endif
+      -%}
+
+      {%- case block.type -%}
+        {%- when 'shop' -%}
+          <li {{ block.shopify_attributes }}>
+            <a
+              class="crumb-mobile-nav__item"
+              href="{{ block.settings.url | default: routes.all_products_collection_url }}"
+              {% if is_current
+                or request.page_type == 'collection'
+                or request.page_type == 'list-collections'
+                or request.page_type == 'product'
+              %}
+                aria-current="page"
+              {% endif %}
+            >
+              <span class="svg-wrapper" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path d="M3 9.5 4.5 4h15L21 9.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-6h6v6"/>
+                </svg>
+              </span>
+              <span class="crumb-mobile-nav__label">{{ label | default: 'Shop' }}</span>
+            </a>
+          </li>
+
+        {%- when 'build_box' -%}
+          <li {{ block.shopify_attributes }}>
+            <a
+              class="crumb-mobile-nav__item"
+              href="{{ block.settings.url | default: routes.root_url }}"
+              {% if is_current %}
+                aria-current="page"
+              {% endif %}
+            >
+              <span class="svg-wrapper" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/>
+                </svg>
+              </span>
+              <span class="crumb-mobile-nav__label">{{ label | default: 'Build Box' }}</span>
+            </a>
+          </li>
+
+        {%- when 'search' -%}
+          <li {{ block.shopify_attributes }}>
+            <button
+              type="button"
+              class="crumb-mobile-nav__item"
+              on:click="#search-modal/showDialog"
+              aria-haspopup="dialog"
+            >
+              <span class="svg-wrapper" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+                </svg>
+              </span>
+              <span class="crumb-mobile-nav__label">
+                {%- if label != blank -%}
+                  {{ label }}
+                {%- else -%}
+                  {{ 'content.search' | t }}
+                {%- endif -%}
+              </span>
+            </button>
+          </li>
+
+        {%- when 'account' -%}
+          <li {{ block.shopify_attributes }}>
+            <a
+              class="crumb-mobile-nav__item"
+              href="{{ routes.account_url }}"
+              {% if request.page_type contains 'customers' %}
+                aria-current="page"
+              {% endif %}
+            >
+              <span class="svg-wrapper" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+                </svg>
+              </span>
+              <span class="crumb-mobile-nav__label">
+                {%- if label != blank -%}
+                  {{ label }}
+                {%- else -%}
+                  {{ 'content.account_title' | t }}
+                {%- endif -%}
+              </span>
+            </a>
+          </li>
+      {%- endcase -%}
+    {%- endfor -%}
+  </ul>
+</nav>
+
+{% stylesheet %}
+  .crumb-mobile-nav {
+    display: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .crumb-mobile-nav {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: var(--layer-sticky);
+      display: block;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgb(252 249 248 / 0.94);
+      border-top: var(--crumb-border);
+      backdrop-filter: blur(12px);
+    }
+
+    body {
+      padding-bottom: calc(var(--crumb-mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .crumb-mobile-nav__list {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      height: var(--crumb-mobile-nav-height);
+      margin: 0;
+      padding: 0 var(--crumb-space-xs);
+      list-style: none;
+    }
+
+    .crumb-mobile-nav__list > li {
+      flex: 1 1 0;
+      display: flex;
+    }
+
+    .crumb-mobile-nav__item {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      color: var(--crumb-ink-muted);
+      font-family: var(--crumb-font-body);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color var(--crumb-transition);
+    }
+
+    .crumb-mobile-nav__item .svg-wrapper {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .crumb-mobile-nav__item svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .crumb-mobile-nav__label {
+      max-width: 100%;
+      overflow: hidden;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      line-height: 0.875rem;
+      letter-spacing: 0.04em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .crumb-mobile-nav__item[aria-current='page'] {
+      color: var(--crumb-primary);
+    }
+
+    .crumb-mobile-nav__item[aria-current='page']::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 2rem;
+      height: 3px;
+      background: var(--crumb-primary);
+    }
+
+    .crumb-mobile-nav__item:active {
+      color: var(--crumb-ink);
+    }
+
+    .crumb-mobile-nav__item:focus-visible {
+      outline: 3px solid var(--crumb-primary);
+      outline-offset: -3px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-mobile-nav__item {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb mobile nav",
+  "settings": [],
+  "max_blocks": 4,
+  "blocks": [
+    {
+      "type": "shop",
+      "name": "Shop tab",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Label", "default": "Shop" },
+        { "type": "url", "id": "url", "label": "Link", "info": "Defaults to all products if left blank." }
+      ]
+    },
+    {
+      "type": "build_box",
+      "name": "Build Box tab",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Label", "default": "Build Box" },
+        { "type": "url", "id": "url", "label": "Link" }
+      ]
+    },
+    {
+      "type": "search",
+      "name": "Search tab",
+      "settings": [{ "type": "text", "id": "label", "label": "Label", "default": "Search" }]
+    },
+    {
+      "type": "account",
+      "name": "Account tab",
+      "settings": [{ "type": "text", "id": "label", "label": "Label", "default": "Account" }]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb mobile nav",
+      "blocks": [
+        { "type": "shop", "settings": { "label": "Shop", "url": "/collections/all" } },
+        { "type": "build_box", "settings": { "label": "Build Box" } },
+        { "type": "search", "settings": { "label": "Search" } },
+        { "type": "account", "settings": { "label": "Account" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
