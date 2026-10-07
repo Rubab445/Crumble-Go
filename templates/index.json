@@ -6,83 +6,141 @@
  * or related systems. Please exercise caution as any changes
  * made to this file may be overwritten.
  * ------------------------------------------------------------
- */{
+ */
+{
   "sections": {
     "crumb_hero": {
-  "type": "crumb-hero",
-  "blocks": {
-    "copy": {
-      "type": "crumb-hero-copy",
+      "type": "crumb-hero",
       "blocks": {
-        "pill": {
-          "type": "crumb-hero-pill",
-          "settings": {
-            "text": "Custom Pantry Boxes Baked Fresh Weekly",
-            "text_mobile": "Custom Pantry Boxes"
-          }
-        },
-        "heading": {
-          "type": "crumb-hero-heading",
-          "settings": { "line_1": "Small Bites,", "line_2": "Big Goodness.", "tag": "h1" }
-        },
-        "subtext": {
-          "type": "crumb-hero-subtext",
-          "settings": {
-            "text": "<p>Nutritious and dangerously addictive snacks handcrafted with honest, pantry-pure ingredients. Pick your box size, fill every slot to your craving, and get rewarded for a fuller box.</p>"
-          }
-        },
-        "buttons": {
-          "type": "crumb-hero-buttons",
-          "settings": {
-            "primary_label": "Start Building Your Box",
-            "primary_url": "shopify://collections/all",
-            "secondary_label": "Browse All Snacks",
-            "secondary_url": "shopify://collections/all"
-          }
-        },
-        "trust_row": {
-          "type": "crumb-hero-trust-row",
+        "copy": {
+          "type": "crumb-hero-copy",
+          "settings": {},
           "blocks": {
-            "trust_1": { "type": "_crumb-trust-item", "settings": { "icon": "stars", "text": "4.9/5 from 3,800+ snackers" } },
-            "trust_2": { "type": "_crumb-trust-item", "settings": { "icon": "leaf", "text": "Zero Preservatives" } },
-            "trust_3": { "type": "_crumb-trust-item", "settings": { "icon": "truck", "text": "Fast Fresh Dispatch" } }
+            "pill": {
+              "type": "crumb-hero-pill",
+              "settings": {
+                "text": "Custom Pantry Boxes Baked Fresh Weekly",
+                "text_mobile": "Custom Pantry Boxes"
+              }
+            },
+            "heading": {
+              "type": "crumb-hero-heading",
+              "settings": {
+                "tag": "h1"
+              }
+            },
+            "subtext": {
+              "type": "crumb-hero-subtext",
+              "settings": {
+                "text": "<p>Nutritious and dangerously addictive snacks handcrafted with honest, pantry-pure ingredients. Pick your box size, fill every slot to your craving, and get rewarded for a fuller box.</p>"
+              }
+            },
+            "buttons": {
+              "type": "crumb-hero-buttons",
+              "settings": {
+                "primary_label": "Start Building Your Box",
+                "primary_url": "shopify://collections/all",
+                "secondary_label": "Browse All Snacks",
+                "secondary_url": "shopify://collections/all"
+              }
+            },
+            "trust_row": {
+              "type": "crumb-hero-trust-row",
+              "settings": {},
+              "blocks": {
+                "trust_1": {
+                  "type": "_crumb-trust-item",
+                  "settings": {
+                    "icon": "stars",
+                    "text": "4.9/5 from 3,800+ snackers"
+                  }
+                },
+                "trust_2": {
+                  "type": "_crumb-trust-item",
+                  "settings": {
+                    "icon": "leaf",
+                    "text": "Zero Preservatives"
+                  }
+                },
+                "trust_3": {
+                  "type": "_crumb-trust-item",
+                  "settings": {
+                    "icon": "truck",
+                    "text": "Fast Fresh Dispatch"
+                  }
+                }
+              },
+              "block_order": [
+                "trust_1",
+                "trust_2",
+                "trust_3"
+              ]
+            }
           },
-          "block_order": ["trust_1", "trust_2", "trust_3"]
+          "block_order": [
+            "pill",
+            "heading",
+            "subtext",
+            "buttons",
+            "trust_row"
+          ]
+        },
+        "media": {
+          "type": "crumb-hero-media",
+          "settings": {
+            "image_label": "The 6-Pack Goodness Kit",
+            "bundle_name": "The Crowd Pleaser",
+            "bundle_badge": "SAVE 10%",
+            "show_slots": true,
+            "slot_emojis": "🍫,🥜,🍌,🍓,🌰,🥨",
+            "slot_caption": "6/6 slots chosen",
+            "slot_caption_strong": "Ready to pack!"
+          },
+          "blocks": {
+            "sticker_1": {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "100% Real Food",
+                "icon": "verified",
+                "style": "mint",
+                "position": "top_left",
+                "show_on_mobile": true
+              }
+            },
+            "sticker_2": {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "Save Up to 15%",
+                "icon": "percent",
+                "style": "coral",
+                "position": "bottom_right",
+                "show_on_mobile": false
+              }
+            },
+            "sticker_3": {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "Small-Batch Roasted",
+                "icon": "flame",
+                "style": "mustard",
+                "position": "middle_right",
+                "show_on_mobile": false
+              }
+            }
+          },
+          "block_order": [
+            "sticker_1",
+            "sticker_2",
+            "sticker_3"
+          ]
         }
       },
-      "block_order": ["pill", "heading", "subtext", "buttons", "trust_row"]
+      "block_order": [
+        "copy",
+        "media"
+      ],
+      "settings": {}
     },
-    "media": {
-      "type": "crumb-hero-media",
-      "settings": {
-        "image_label": "The 6-Pack Goodness Kit",
-        "bundle_name": "The Crowd Pleaser",
-        "bundle_badge": "SAVE 10%",
-        "show_slots": true,
-        "slot_emojis": "🍫,🥜,🍌,🍓,🌰,🥨",
-        "slot_caption": "6/6 slots chosen",
-        "slot_caption_strong": "Ready to pack!"
-      },
-      "blocks": {
-        "sticker_1": {
-          "type": "_crumb-hero-sticker",
-          "settings": { "text": "100% Real Food", "icon": "verified", "style": "mint", "position": "top_left", "show_on_mobile": true }
-        },
-        "sticker_2": {
-          "type": "_crumb-hero-sticker",
-          "settings": { "text": "Save Up to 15%", "icon": "percent", "style": "coral", "position": "bottom_right", "show_on_mobile": false }
-        },
-        "sticker_3": {
-          "type": "_crumb-hero-sticker",
-          "settings": { "text": "Small-Batch Roasted", "icon": "flame", "style": "mustard", "position": "middle_right", "show_on_mobile": false }
-        }
-      },
-      "block_order": ["sticker_1", "sticker_2", "sticker_3"]
-    }
-  },
-  "block_order": ["copy", "media"],
-  "settings": {}
-},
     "product_list_fa6P9H": {
       "type": "product-list",
       "blocks": {
