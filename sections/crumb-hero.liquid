@@ -1,0 +1,1004 @@
+{% comment %}
+  Crumb & Co. hero.
+
+  Structure: section > panel > [copy block | media block].
+  Mobile-first: the base styles are the phone design (flat, no borders,
+  stacked, full-width buttons). From 750px up the bordered "panel" desktop
+  design takes over, and from 990px the layout becomes two columns.
+
+  Phone copy column: a wrapping row. The pill, subtext, buttons and trust row
+  each take a full row; the two heading lines sit side by side on one row.
+  750px and up: a normal column, heading lines stacked.
+
+  Every color, border, shadow, radius, gap and font comes from --crumb-* tokens.
+{% endcomment %}
+
+<section class="crumb-hero">
+  <div class="crumb-hero__panel">
+    <div class="crumb-hero__inner">
+      {% content_for 'blocks' %}
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .crumb-hero {
+    /* No --crumb-teal color exists yet, so these fall back to existing tokens.
+       Add a "Crumb teal" color setting later and they pick it up automatically. */
+    --hero-teal: var(--crumb-teal, var(--crumb-ink));
+    --hero-on-teal: var(--crumb-on-teal, var(--crumb-surface-lowest));
+
+    width: 100%;
+    max-width: var(--crumb-container);
+    margin-inline: auto;
+    padding: var(--crumb-space-md) var(--crumb-gutter) var(--crumb-space-lg);
+    box-sizing: border-box;
+    font-family: var(--crumb-font-body);
+  }
+
+  /* =====================================================================
+     BASE = PHONE (< 750px)
+     ===================================================================== */
+
+  .crumb-hero__panel {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .crumb-hero__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--crumb-space-md);
+    align-items: center;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  /* Copy column: wrapping row. Every block takes a full row, except the
+     heading lines, which sit side by side. */
+  .crumb-hero__copy {
+    --hero-copy-gap: var(--crumb-space-md);
+
+    display: flex;
+    flex-flow: row wrap;
+    align-items: baseline;
+    column-gap: 0.375rem;
+    row-gap: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .crumb-hero__copy > * {
+    flex: 0 0 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .crumb-hero__copy > .crumb-hero__heading {
+    flex: 0 1 auto;
+  }
+
+  /* Vertical rhythm comes from margins, so wrapped heading lines stay tight */
+  .crumb-hero__copy > * + * {
+    margin-top: var(--hero-copy-gap);
+  }
+
+  .crumb-hero__copy > .crumb-hero__heading + .crumb-hero__heading {
+    margin-top: 0;
+  }
+
+  .crumb-hero__copy > .crumb-hero__heading + .crumb-hero__subtext {
+    margin-top: var(--crumb-space-sm);
+  }
+
+  /* --- Pill ------------------------------------------------------------ */
+
+  .crumb-hero__pill-row {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .crumb-hero__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: var(--crumb-space-xs) 0.75rem;
+    background: var(--crumb-mustard);
+    color: var(--crumb-on-mustard);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    transform: rotate(-1deg);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+
+  .crumb-hero__pill svg {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .crumb-hero__pill-text--desktop {
+    display: none;
+  }
+
+  /* --- Heading (one block per line) --------------------------------------- */
+
+  /* Scales with the screen so both lines fit on one row:
+     about 26px at 390px wide, never above 30px */
+  .crumb-hero__heading {
+    display: block;
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: clamp(1.25rem, 6.8vw, 1.875rem);
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+    color: var(--crumb-ink);
+  }
+
+  /* Phone: hand-drawn squiggle under the accent line, colored by --crumb-mustard */
+  .crumb-hero__heading--accent {
+    position: relative;
+    width: fit-content;
+    color: var(--crumb-primary);
+  }
+
+  .crumb-hero__heading--accent::after {
+    content: '';
+    position: absolute;
+    bottom: -0.375rem;
+    left: 0;
+    width: 100%;
+    height: 0.75rem;
+    background-color: var(--crumb-mustard);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 12' preserveAspectRatio='none'%3E%3Cpath d='M2 9C28 3 58 11 85 6C112 1 138 9 158 5' fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E")
+      no-repeat center / 100% 100%;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 12' preserveAspectRatio='none'%3E%3Cpath d='M2 9C28 3 58 11 85 6C112 1 138 9 158 5' fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E")
+      no-repeat center / 100% 100%;
+    pointer-events: none;
+  }
+
+  /* --- Subtext: full width, smaller text on phones ------------------------- */
+
+  .crumb-hero__subtext {
+    width: 100%;
+    max-width: none;
+    color: var(--crumb-ink-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .crumb-hero__subtext p {
+    margin: 0;
+  }
+
+  /* --- Buttons: stacked, full width, centered text ------------------------ */
+
+  .crumb-hero__buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    align-self: stretch;
+    gap: var(--crumb-space-sm);
+    padding-top: var(--crumb-space-xs);
+  }
+
+  .crumb-hero__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--crumb-space-sm);
+    width: 100%;
+    border: 0;
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    font-family: var(--crumb-font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25rem;
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-decoration: none;
+    transition:
+      box-shadow var(--crumb-transition),
+      transform var(--crumb-transition),
+      background-color var(--crumb-transition);
+  }
+
+  .crumb-hero__button:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  .crumb-hero__button:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 3px;
+  }
+
+  .crumb-hero__button--primary {
+    height: 3.5rem;
+    background: var(--crumb-coral);
+    color: var(--crumb-on-coral);
+  }
+
+  .crumb-hero__button--secondary {
+    height: 3.25rem;
+    background: var(--crumb-surface-lowest);
+    color: var(--crumb-ink);
+  }
+
+  .crumb-hero__button-icon {
+    display: flex;
+    flex-shrink: 0;
+    transition: transform var(--crumb-transition);
+  }
+
+  .crumb-hero__button-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .crumb-hero__button-icon--desktop {
+    display: none;
+  }
+
+  /* --- Trust row: only this row scrolls sideways, never the page ------------- */
+
+  .crumb-hero__trust-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    align-self: stretch;
+    gap: var(--crumb-space-sm);
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-block: var(--crumb-space-xs);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .crumb-hero__trust-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .crumb-hero__trust-item {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--crumb-space-xs);
+    padding: var(--crumb-space-xs) 0.625rem;
+    background: var(--crumb-surface-low);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    color: var(--crumb-ink);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .crumb-hero__trust-icon {
+    display: flex;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .crumb-hero__trust-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .crumb-hero__trust-icon--wide {
+    display: none;
+  }
+
+  .crumb-hero__trust-icon--single,
+  .crumb-hero__trust-item--star .crumb-hero__trust-icon {
+    color: var(--crumb-mustard);
+  }
+
+  .crumb-hero__trust-item--leaf .crumb-hero__trust-icon {
+    color: var(--hero-teal);
+  }
+
+  .crumb-hero__trust-item--truck .crumb-hero__trust-icon,
+  .crumb-hero__trust-item--bolt .crumb-hero__trust-icon,
+  .crumb-hero__trust-item--check .crumb-hero__trust-icon,
+  .crumb-hero__trust-item--heart .crumb-hero__trust-icon {
+    color: var(--crumb-primary);
+  }
+
+  /* --- Media: full-bleed card + bundle bar ------------------------------------ */
+
+  .crumb-hero__media {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    margin-top: var(--crumb-space-xs);
+  }
+
+  .crumb-hero__card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    background: var(--crumb-surface-lowest);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-hero__image-frame {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 14rem;
+    background: var(--crumb-surface-container);
+  }
+
+  .crumb-hero__image,
+  .crumb-hero__image--placeholder {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Phone: label, bottom right */
+  .crumb-hero__image-label {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    padding: var(--crumb-space-xs) 0.625rem;
+    background: var(--hero-teal);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    color: var(--hero-on-teal);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+  }
+
+  .crumb-hero__bundle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--crumb-space-sm);
+    padding: 0.75rem;
+    background: var(--crumb-surface-lowest);
+  }
+
+  .crumb-hero__bundle-info {
+    display: flex;
+    align-items: center;
+    gap: var(--crumb-space-sm);
+    min-width: 0;
+  }
+
+  .crumb-hero__bundle-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: var(--crumb-mustard);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    color: var(--crumb-on-mustard);
+  }
+
+  .crumb-hero__bundle-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .crumb-hero__bundle-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .crumb-hero__bundle-name {
+    color: var(--crumb-ink);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.125rem;
+    letter-spacing: 0.02em;
+  }
+
+  .crumb-hero__bundle-meta {
+    color: var(--crumb-ink-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.125rem;
+  }
+
+  .crumb-hero__bundle-badge {
+    flex-shrink: 0;
+    padding: 0.125rem var(--crumb-space-sm);
+    background: var(--crumb-primary);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    color: var(--crumb-surface-lowest);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* Emoji tiles + caption are desktop-only */
+  .crumb-hero__slot-tiles,
+  .crumb-hero__slot-caption {
+    display: none;
+  }
+
+  /* Stickers: hidden on phones unless "Show on phones" is on. The one that is
+     shown sits inside the photo, top left, as a plain mustard tag. */
+  .crumb-hero__sticker {
+    position: absolute;
+    z-index: 2;
+    display: none;
+    align-items: center;
+    gap: 0.375rem;
+    padding: var(--crumb-space-xs) 0.625rem;
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .crumb-hero__sticker svg {
+    display: none;
+  }
+
+  .crumb-hero__sticker--mobile {
+    top: 0.75rem;
+    left: 0.75rem;
+    display: inline-flex;
+    background: var(--crumb-mustard);
+    color: var(--crumb-on-mustard);
+    transform: rotate(-3deg);
+  }
+
+  /* =====================================================================
+     750px and up: bordered desktop design (stacked until 990px)
+     ===================================================================== */
+
+  @media screen and (min-width: 750px) {
+    .crumb-hero {
+      padding-bottom: var(--crumb-space-xl);
+    }
+
+    .crumb-hero__panel {
+      overflow: hidden;
+      padding: var(--crumb-space-lg);
+      background: var(--crumb-surface-low);
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-lg);
+    }
+
+    .crumb-hero__panel::before,
+    .crumb-hero__panel::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .crumb-hero__panel::before {
+      top: -2.5rem;
+      right: -2.5rem;
+      width: 11rem;
+      height: 11rem;
+      background: var(--crumb-mustard-soft);
+      opacity: 0.7;
+    }
+
+    .crumb-hero__panel::after {
+      bottom: -2rem;
+      left: -2rem;
+      width: 9rem;
+      height: 9rem;
+      background: var(--crumb-mint);
+      opacity: 0.4;
+    }
+
+    .crumb-hero__inner {
+      gap: var(--crumb-space-xl);
+    }
+
+    /* Copy column goes back to a normal column; heading lines stack */
+    .crumb-hero__copy {
+      --hero-copy-gap: calc(var(--crumb-space-md) + var(--crumb-space-xs));
+
+      flex-flow: column nowrap;
+      align-items: flex-start;
+      gap: var(--hero-copy-gap);
+    }
+
+    .crumb-hero__copy > *,
+    .crumb-hero__copy > .crumb-hero__heading {
+      flex: 0 0 auto;
+    }
+
+    .crumb-hero__copy > * + * {
+      margin-top: 0;
+    }
+
+    .crumb-hero__copy > .crumb-hero__heading + .crumb-hero__heading {
+      margin-top: calc(var(--hero-copy-gap) * -1);
+    }
+
+    .crumb-hero__copy > .crumb-hero__heading + .crumb-hero__subtext {
+      margin-top: 0;
+    }
+
+    /* Pill */
+    .crumb-hero__pill {
+      gap: var(--crumb-space-sm);
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-full);
+      transform: rotate(-2deg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1rem;
+    }
+
+    .crumb-hero__pill svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    .crumb-hero__pill-text--mobile {
+      display: none;
+    }
+
+    .crumb-hero__pill-text--desktop {
+      display: inline;
+    }
+
+    /* Heading: wavy text-decoration replaces the phone squiggle */
+    .crumb-hero__heading {
+      font-size: 2.375rem;
+      line-height: 1.05;
+    }
+
+    .crumb-hero__heading--accent {
+      text-decoration-line: underline;
+      text-decoration-style: wavy;
+      text-decoration-color: var(--crumb-mustard);
+      text-decoration-thickness: 4px;
+    }
+
+    .crumb-hero__heading--accent::after {
+      display: none;
+    }
+
+    /* Subtext */
+    .crumb-hero__subtext {
+      width: auto;
+      max-width: 36rem;
+      font-size: 1.125rem;
+      font-weight: 400;
+      line-height: 1.75rem;
+    }
+
+    /* Buttons */
+    .crumb-hero__buttons {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--crumb-space-md);
+      padding-top: var(--crumb-space-sm);
+    }
+
+    .crumb-hero__button {
+      display: inline-flex;
+      width: auto;
+      height: auto;
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-lg);
+      font-size: 0.875rem;
+      line-height: 1.125rem;
+    }
+
+    .crumb-hero__button-icon svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    .crumb-hero__button--primary {
+      padding: 0.875rem var(--crumb-space-lg);
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    .crumb-hero__button--primary .crumb-hero__button-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .crumb-hero__button--primary:hover {
+      box-shadow: var(--crumb-shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .crumb-hero__button--primary:hover .crumb-hero__button-icon {
+      transform: translateX(4px);
+    }
+
+    .crumb-hero__button--primary:active {
+      box-shadow: var(--crumb-shadow-none);
+      transform: translate(2px, 2px);
+    }
+
+    .crumb-hero__button--secondary {
+      padding: 0.875rem 1.25rem;
+    }
+
+    .crumb-hero__button--secondary:hover {
+      background: var(--crumb-surface-container);
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    .crumb-hero__button--secondary:active {
+      box-shadow: var(--crumb-shadow-none);
+      transform: translate(1px, 1px);
+    }
+
+    .crumb-hero__button-icon--desktop {
+      display: flex;
+    }
+
+    .crumb-hero__button-icon--mobile {
+      display: none;
+    }
+
+    /* Trust row: plain items under a rule */
+    .crumb-hero__trust-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--crumb-space-lg);
+      width: 100%;
+      padding: var(--crumb-space-md) 0 0;
+      overflow: visible;
+      border-top: 2px solid color-mix(in srgb, var(--crumb-ink) 15%, transparent);
+    }
+
+    .crumb-hero__trust-item {
+      gap: var(--crumb-space-sm);
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      box-shadow: none;
+      color: var(--crumb-ink-muted);
+      font-weight: 800;
+    }
+
+    .crumb-hero__trust-item--stars {
+      color: var(--crumb-ink);
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1rem;
+    }
+
+    .crumb-hero__trust-icon--wide {
+      display: flex;
+      width: 6.25rem;
+      height: 1.25rem;
+      color: var(--crumb-mustard);
+    }
+
+    .crumb-hero__trust-icon--single {
+      display: none;
+    }
+
+    /* Media */
+    .crumb-hero__media {
+      margin-top: 0;
+    }
+
+    .crumb-hero__card {
+      gap: 0.75rem;
+      padding: var(--crumb-space-md);
+      overflow: visible;
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-lg);
+    }
+
+    .crumb-hero__image-frame {
+      height: 20rem;
+      background: color-mix(in srgb, var(--crumb-mustard-soft) 40%, transparent);
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-md);
+    }
+
+    .crumb-hero__image-label {
+      right: auto;
+      left: 0.75rem;
+      background: color-mix(in srgb, var(--crumb-surface-lowest) 95%, transparent);
+      border: var(--crumb-border);
+      color: var(--crumb-ink);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+
+    .crumb-hero__bundle-bar {
+      display: none;
+    }
+
+    .crumb-hero__slot-tiles {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: var(--crumb-space-sm);
+      padding-top: var(--crumb-space-xs);
+    }
+
+    /* Decoration only: six existing Crumb color tokens, no new palette */
+    .crumb-hero__slot-tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.5rem;
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-md);
+      box-shadow: var(--crumb-shadow-xs);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .crumb-hero__slot-tile--1 { background: var(--crumb-primary); }
+    .crumb-hero__slot-tile--2 { background: var(--crumb-mustard); }
+    .crumb-hero__slot-tile--3 { background: var(--crumb-mint); }
+    .crumb-hero__slot-tile--4 { background: var(--crumb-coral); }
+    .crumb-hero__slot-tile--5 { background: var(--crumb-surface-container); }
+    .crumb-hero__slot-tile--6 { background: var(--crumb-mustard-soft); }
+
+    .crumb-hero__slot-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--crumb-space-sm);
+      padding-inline: var(--crumb-space-xs);
+      color: var(--crumb-ink-muted);
+      font-size: 0.6875rem;
+      font-weight: 800;
+      line-height: 0.875rem;
+      letter-spacing: 0.04em;
+    }
+
+    .crumb-hero__slot-caption-strong {
+      color: var(--crumb-primary);
+      font-weight: 700;
+    }
+
+    /* Stickers hang off the card edges */
+    .crumb-hero__sticker {
+      display: inline-flex;
+      padding: 0.375rem 0.75rem;
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-md);
+      box-shadow: var(--crumb-shadow-sm);
+    }
+
+    .crumb-hero__sticker svg {
+      display: block;
+      flex-shrink: 0;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .crumb-hero__sticker--mint {
+      background: var(--crumb-mint);
+      color: var(--crumb-ink);
+    }
+
+    .crumb-hero__sticker--coral {
+      background: var(--crumb-coral);
+      color: var(--crumb-on-coral);
+    }
+
+    .crumb-hero__sticker--mustard {
+      padding: var(--crumb-space-xs) 0.625rem;
+      background: var(--crumb-mustard-soft);
+      color: var(--crumb-on-mustard-soft);
+      border-radius: var(--crumb-radius-full);
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .crumb-hero__sticker--mustard svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    .crumb-hero__sticker--top_left {
+      top: -1rem;
+      right: auto;
+      bottom: auto;
+      left: -1rem;
+      transform: rotate(-6deg);
+    }
+    .crumb-hero__sticker--top_right {
+      top: -1rem;
+      right: -1rem;
+      bottom: auto;
+      left: auto;
+      transform: rotate(6deg);
+    }
+    .crumb-hero__sticker--middle_left {
+      top: 50%;
+      right: auto;
+      bottom: auto;
+      left: -1rem;
+      transform: rotate(-6deg);
+    }
+    .crumb-hero__sticker--middle_right {
+      top: 50%;
+      right: -1rem;
+      bottom: auto;
+      left: auto;
+      transform: rotate(6deg);
+    }
+    .crumb-hero__sticker--bottom_left {
+      top: auto;
+      right: auto;
+      bottom: -0.75rem;
+      left: 1rem;
+      transform: rotate(-3deg);
+    }
+    .crumb-hero__sticker--bottom_right {
+      top: auto;
+      right: 1rem;
+      bottom: -0.75rem;
+      left: auto;
+      transform: rotate(3deg);
+    }
+  }
+
+  /* =====================================================================
+     990px and up: two columns
+     ===================================================================== */
+
+  @media screen and (min-width: 990px) {
+    .crumb-hero__panel {
+      padding: var(--crumb-space-xl);
+    }
+
+    .crumb-hero__inner {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+
+    .crumb-hero__copy,
+    .crumb-hero__media {
+      grid-column: auto;
+    }
+
+    .crumb-hero__heading {
+      font-size: 3.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-hero__button,
+    .crumb-hero__button-icon {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb hero",
+  "class": "crumb-hero-section",
+  "blocks": [{ "type": "crumb-hero-copy" }, { "type": "crumb-hero-media" }],
+  "max_blocks": 2,
+  "presets": [
+    {
+      "name": "Crumb hero",
+      "category": "Crumb & Co.",
+      "blocks": [
+        {
+          "type": "crumb-hero-copy",
+          "blocks": [
+            {
+              "type": "crumb-hero-pill",
+              "settings": { "text": "Custom Pantry Boxes Baked Fresh Weekly", "text_mobile": "Custom Pantry Boxes" }
+            },
+            {
+              "type": "crumb-hero-heading",
+              "settings": { "text": "Small Bites,", "accent": false, "tag": "h1" }
+            },
+            {
+              "type": "crumb-hero-heading",
+              "settings": { "text": "Big Goodness.", "accent": true, "tag": "p" }
+            },
+            {
+              "type": "crumb-hero-subtext",
+              "settings": {
+                "text": "<p>Handcrafted snacks made with honest, pantry-pure ingredients.</p>"
+              }
+            },
+            {
+              "type": "crumb-hero-buttons",
+              "settings": { "primary_label": "Start Building Your Box", "secondary_label": "Browse All Snacks" }
+            },
+            {
+              "type": "crumb-hero-trust-row",
+              "blocks": [
+                { "type": "_crumb-trust-item", "settings": { "icon": "stars", "text": "4.9/5 from 3,800+ snackers" } },
+                { "type": "_crumb-trust-item", "settings": { "icon": "leaf", "text": "Zero Preservatives" } },
+                { "type": "_crumb-trust-item", "settings": { "icon": "truck", "text": "Fast Fresh Dispatch" } }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "crumb-hero-media",
+          "blocks": [
+            {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "100% Real Food",
+                "icon": "verified",
+                "style": "mint",
+                "position": "top_left",
+                "show_on_mobile": true
+              }
+            },
+            {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "Save Up to 15%",
+                "icon": "percent",
+                "style": "coral",
+                "position": "bottom_right",
+                "show_on_mobile": false
+              }
+            },
+            {
+              "type": "_crumb-hero-sticker",
+              "settings": {
+                "text": "Small-Batch Roasted",
+                "icon": "flame",
+                "style": "mustard",
+                "position": "middle_right",
+                "show_on_mobile": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

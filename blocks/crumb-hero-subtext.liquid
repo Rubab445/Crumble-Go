@@ -1,0 +1,20 @@
+<div class="crumb-hero__subtext" {{ block.shopify_attributes }}>
+  {{- block.settings.text -}}
+</div>
+
+{% schema %}
+{
+  "name": "Hero subtext",
+  "settings": [
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Nutritious and dangerously addictive snacks handcrafted with honest, pantry-pure ingredients. Pick your box size, fill every slot to your craving, and get rewarded for a fuller box.</p>"
+    }
+  ],
+  "presets": [
+    { "name": "Hero subtext" }
+  ]
+}
+{% endschema %}

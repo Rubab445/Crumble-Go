@@ -1,0 +1,35 @@
+{%- liquid
+  assign mobile_text = block.settings.text_mobile | default: block.settings.text
+-%}
+
+<div class="crumb-hero__pill-row" {{ block.shopify_attributes }}>
+  <span class="crumb-hero__pill">
+    {%- render 'crumb-hero-icon', name: 'sparkles' -%}
+    <span class="crumb-hero__pill-text--mobile">{{ mobile_text }}</span>
+    <span class="crumb-hero__pill-text--desktop">{{ block.settings.text }}</span>
+  </span>
+</div>
+
+{% schema %}
+{
+  "name": "Hero pill",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Text",
+      "default": "Custom Pantry Boxes Baked Fresh Weekly"
+    },
+    {
+      "type": "text",
+      "id": "text_mobile",
+      "label": "Text on phones",
+      "info": "Shorter version for small screens. Leave blank to use the text above.",
+      "default": "Custom Pantry Boxes"
+    }
+  ],
+  "presets": [
+    { "name": "Hero pill" }
+  ]
+}
+{% endschema %}

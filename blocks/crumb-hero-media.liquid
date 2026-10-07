@@ -1,0 +1,143 @@
+{%- liquid
+  assign image = block.settings.image
+  assign emojis = block.settings.slot_emojis | split: ','
+
+  # Same rule as Horizon's hero: high priority only when this is the first section.
+  # If section.index is unavailable here, it stays 'high' (the safe default for a hero).
+  assign fetch_priority = 'high'
+  if section.index > 1
+    assign fetch_priority = 'auto'
+  endif
+-%}
+
+<div class="crumb-hero__media" {{ block.shopify_attributes }}>
+  <div class="crumb-hero__card">
+    <div class="crumb-hero__image-frame">
+      {%- if image != blank -%}
+        {{
+          image
+          | image_url: width: 1200
+          | image_tag:
+            class: 'crumb-hero__image',
+            widths: '480, 720, 960, 1200',
+            sizes: '(min-width: 990px) 27rem, (min-width: 750px) calc(100vw - 8.5rem), calc(100vw - 1.5rem)',
+            loading: 'eager',
+            fetchpriority: fetch_priority
+        }}
+      {%- else -%}
+        {{ 'lifestyle-1' | placeholder_svg_tag: 'crumb-hero__image--placeholder' }}
+      {%- endif -%}
+
+      {%- if block.settings.image_label != blank -%}
+        <div class="crumb-hero__image-label">
+          <span class="crumb-hero__image-dot" aria-hidden="true"></span>
+          <span>{{ block.settings.image_label }}</span>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment %} Phones: bundle bar {%- endcomment -%}
+    {%- if block.settings.bundle_name != blank or block.settings.bundle_badge != blank -%}
+      <div class="crumb-hero__bundle-bar">
+        <div class="crumb-hero__bundle-info">
+          <span class="crumb-hero__bundle-icon" aria-hidden="true">
+            {%- render 'crumb-hero-icon', name: 'package' -%}
+          </span>
+          <span class="crumb-hero__bundle-text">
+            <span class="crumb-hero__bundle-name">{{ block.settings.bundle_name }}</span>
+            <span class="crumb-hero__bundle-meta">{{ block.settings.slot_caption }}</span>
+          </span>
+        </div>
+        {%- if block.settings.bundle_badge != blank -%}
+          <span class="crumb-hero__bundle-badge">{{ block.settings.bundle_badge }}</span>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- comment %} Tablet and desktop: emoji tiles {%- endcomment -%}
+    {%- if block.settings.show_slots -%}
+      <div class="crumb-hero__slot-tiles" aria-hidden="true">
+        {%- for emoji in emojis limit: 6 -%}
+          <span class="crumb-hero__slot-tile crumb-hero__slot-tile--{{ forloop.index }}">{{ emoji | strip }}</span>
+        {%- endfor -%}
+      </div>
+      <div class="crumb-hero__slot-caption">
+        <span>{{ block.settings.slot_caption }}</span>
+        <span class="crumb-hero__slot-caption-strong">{{ block.settings.slot_caption_strong }}</span>
+      </div>
+    {%- endif -%}
+  </div>
+
+  {% content_for 'blocks' %}
+</div>
+
+{% schema %}
+{
+  "name": "Hero photo card",
+  "blocks": [
+    { "type": "_crumb-hero-sticker" }
+  ],
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Photo"
+    },
+    {
+      "type": "text",
+      "id": "image_label",
+      "label": "Photo label",
+      "default": "The 6-Pack Goodness Kit"
+    },
+    {
+      "type": "header",
+      "content": "Phone: bundle bar"
+    },
+    {
+      "type": "text",
+      "id": "bundle_name",
+      "label": "Bundle name",
+      "default": "The Crowd Pleaser"
+    },
+    {
+      "type": "text",
+      "id": "bundle_badge",
+      "label": "Badge",
+      "default": "SAVE 10%"
+    },
+    {
+      "type": "header",
+      "content": "Tablet and desktop: box slots"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_slots",
+      "label": "Show box slot tiles",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "slot_emojis",
+      "label": "Slot emojis",
+      "info": "Up to 6, separated by commas.",
+      "default": "🍫,🥜,🍌,🍓,🌰,🥨"
+    },
+    {
+      "type": "text",
+      "id": "slot_caption",
+      "label": "Slots text",
+      "info": "Also shown in the phone bundle bar.",
+      "default": "6/6 slots chosen"
+    },
+    {
+      "type": "text",
+      "id": "slot_caption_strong",
+      "label": "Caption (right, desktop)",
+      "default": "Ready to pack!"
+    }
+  ],
+  "presets": [
+    { "name": "Hero photo card" }
+  ]
+}
+{% endschema %}

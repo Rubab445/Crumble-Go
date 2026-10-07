@@ -1,0 +1,22 @@
+<div class="crumb-hero__trust-row" {{ block.shopify_attributes }}>
+  {% content_for 'blocks' %}
+</div>
+
+{% schema %}
+{
+  "name": "Hero trust row",
+  "blocks": [
+    { "type": "_crumb-trust-item" }
+  ],
+  "presets": [
+    {
+      "name": "Hero trust row",
+      "blocks": [
+        { "type": "_crumb-trust-item", "settings": { "icon": "stars", "text": "4.9/5 from 3,800+ snackers" } },
+        { "type": "_crumb-trust-item", "settings": { "icon": "leaf", "text": "Zero Preservatives" } },
+        { "type": "_crumb-trust-item", "settings": { "icon": "truck", "text": "Fast Fresh Dispatch" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
