@@ -1,0 +1,58 @@
+<div class="crumb-hero__buttons" {{ block.shopify_attributes }}>
+  {%- if block.settings.primary_url != blank -%}
+    <a class="crumb-hero__button crumb-hero__button--primary" href="{{ block.settings.primary_url }}">
+      <span>{{ block.settings.primary_label }}</span>
+      <span class="crumb-hero__button-icon" aria-hidden="true">
+        {%- render 'crumb-hero-icon', name: 'arrow' -%}
+      </span>
+    </a>
+  {%- endif -%}
+
+  {%- if block.settings.secondary_url != blank -%}
+    <a class="crumb-hero__button crumb-hero__button--secondary" href="{{ block.settings.secondary_url }}">
+      <span class="crumb-hero__button-icon crumb-hero__button-icon--desktop" aria-hidden="true">
+        {%- render 'crumb-hero-icon', name: 'utensils' -%}
+      </span>
+      <span>{{ block.settings.secondary_label }}</span>
+      <span class="crumb-hero__button-icon crumb-hero__button-icon--mobile" aria-hidden="true">
+        {%- render 'crumb-hero-icon', name: 'grid' -%}
+      </span>
+    </a>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Hero buttons",
+  "settings": [
+    {
+      "type": "text",
+      "id": "primary_label",
+      "label": "Primary button label",
+      "default": "Start Building Your Box"
+    },
+    {
+      "type": "url",
+      "id": "primary_url",
+      "label": "Primary button link",
+      "info": "Leave blank to hide this button."
+    },
+    {
+      "type": "text",
+      "id": "secondary_label",
+      "label": "Secondary button label",
+      "default": "Browse All Snacks",
+      "info": "Avoid baking in a snack count here, it goes stale."
+    },
+    {
+      "type": "url",
+      "id": "secondary_url",
+      "label": "Secondary button link",
+      "info": "Leave blank to hide this button."
+    }
+  ],
+  "presets": [
+    { "name": "Hero buttons" }
+  ]
+}
+{% endschema %}

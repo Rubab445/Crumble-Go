@@ -1,0 +1,70 @@
+<div
+  class="crumb-hero__sticker crumb-hero__sticker--{{ block.settings.style }} crumb-hero__sticker--{{ block.settings.position }}{% if block.settings.show_on_mobile %} crumb-hero__sticker--mobile{% endif %}"
+  {{ block.shopify_attributes }}
+>
+  {%- if block.settings.icon != 'none' -%}
+    {%- render 'crumb-hero-icon', name: block.settings.icon -%}
+  {%- endif -%}
+  <span>{{ block.settings.text }}</span>
+</div>
+
+{% schema %}
+{
+  "name": "Sticker",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Text",
+      "default": "100% Real Food"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "Icon",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "verified", "label": "Verified badge" },
+        { "value": "percent", "label": "Percent" },
+        { "value": "flame", "label": "Flame" },
+        { "value": "star", "label": "Star" },
+        { "value": "heart", "label": "Heart" },
+        { "value": "check", "label": "Check" }
+      ],
+      "default": "verified"
+    },
+    {
+      "type": "select",
+      "id": "style",
+      "label": "Style (tablet and desktop)",
+      "options": [
+        { "value": "mint", "label": "Mint (uppercase tag)" },
+        { "value": "coral", "label": "Coral (uppercase tag)" },
+        { "value": "mustard", "label": "Mustard (small pill)" }
+      ],
+      "default": "mint"
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Position (tablet and desktop)",
+      "options": [
+        { "value": "top_left", "label": "Top left" },
+        { "value": "top_right", "label": "Top right" },
+        { "value": "middle_left", "label": "Middle left" },
+        { "value": "middle_right", "label": "Middle right" },
+        { "value": "bottom_left", "label": "Bottom left" },
+        { "value": "bottom_right", "label": "Bottom right" }
+      ],
+      "default": "top_left"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_mobile",
+      "label": "Show on phones",
+      "info": "On phones it appears inside the photo, top left. Turn on for one sticker only.",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

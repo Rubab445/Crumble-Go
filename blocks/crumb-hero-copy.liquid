@@ -1,0 +1,19 @@
+<div class="crumb-hero__copy" {{ block.shopify_attributes }}>
+  {% content_for 'blocks' %}
+</div>
+
+{% schema %}
+{
+  "name": "Hero copy",
+  "blocks": [
+    { "type": "crumb-hero-pill" },
+    { "type": "crumb-hero-heading" },
+    { "type": "crumb-hero-subtext" },
+    { "type": "crumb-hero-buttons" },
+    { "type": "crumb-hero-trust-row" }
+  ],
+  "presets": [
+    { "name": "Hero copy" }
+  ]
+}
+{% endschema %}

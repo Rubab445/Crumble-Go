@@ -1,0 +1,38 @@
+<{{ block.settings.tag }} class="crumb-hero__heading{% if block.settings.accent %} crumb-hero__heading--accent{% endif %}" {{ block.shopify_attributes }}>
+  {{- block.settings.text -}}
+</{{ block.settings.tag }}>
+
+{% schema %}
+{
+  "name": "Hero heading line",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Text",
+      "default": "Small Bites,"
+    },
+    {
+      "type": "checkbox",
+      "id": "accent",
+      "label": "Accent line (colored, squiggle underline)",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "tag",
+      "label": "HTML tag",
+      "info": "Use H1 on only one line per page.",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "p", "label": "Paragraph" }
+      ],
+      "default": "p"
+    }
+  ],
+  "presets": [
+    { "name": "Hero heading line" }
+  ]
+}
+{% endschema %}
