@@ -33,6 +33,16 @@
               },
               "blocks": {}
             },
+            "crumb_hero_heading_HXYXnX": {
+              "type": "crumb-hero-heading",
+              "name": "Hero heading line",
+              "settings": {
+                "text": "Big Blessings.",
+                "accent": true,
+                "tag": "p"
+              },
+              "blocks": {}
+            },
             "subtext": {
               "type": "crumb-hero-subtext",
               "settings": {
@@ -89,6 +99,7 @@
           "block_order": [
             "pill",
             "heading",
+            "crumb_hero_heading_HXYXnX",
             "subtext",
             "buttons",
             "trust_row"
