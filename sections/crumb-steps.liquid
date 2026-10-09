@@ -91,17 +91,19 @@
 
 {% stylesheet %}
   .crumb-steps {
-    /* Token aliases. If your variable names differ, change only these lines. */
     --steps-ink: var(--crumb-ink);
-    --steps-surface: var(--crumb-surface);
+    --steps-surface: var(--crumb-surface-lowest);
     --steps-muted: var(--crumb-ink-muted);
-    --steps-divider: var(--crumb-divider);
+    --steps-divider: var(--crumb-surface-container);
     --steps-coral: var(--crumb-coral);
-    --steps-teal: var(--crumb-teal);
+    --steps-teal: var(--crumb-mint);
     --steps-mustard: var(--crumb-mustard);
     --steps-on-coral: var(--crumb-on-coral);
-    --steps-on-teal: var(--crumb-on-teal);
+    --steps-on-teal: var(--crumb-on-mint);
     --steps-on-mustard: var(--crumb-on-mustard);
+    --steps-footer-coral: var(--crumb-primary);
+    --steps-footer-teal: var(--crumb-mint-deep);
+    --steps-footer-mustard: var(--crumb-on-mustard);
 
     --steps-border: 2px solid var(--steps-ink);
     --steps-shadow: 4px 4px 0 var(--steps-ink);
@@ -140,19 +142,19 @@
     padding: 0.125rem 0.625rem;
     border: var(--steps-border);
     border-radius: 0.375rem;
-    background: var(--steps-teal);
-    color: var(--steps-on-teal);
+    background: var(--crumb-mustard-soft);
+    color: var(--crumb-on-mustard-soft);
+    transform: rotate(-1deg);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     box-shadow: 2px 2px 0 var(--steps-ink);
-    transform: rotate(1deg);
   }
 
   .crumb-steps__heading {
     margin: 0;
-    font-family: var(--crumb-font-heading);
+    font-family: var(--crumb-font-display);
     font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
     font-weight: 800;
     line-height: 1.1;
@@ -193,16 +195,19 @@
   .crumb-steps__card--coral {
     --step-bg: var(--steps-coral);
     --step-fg: var(--steps-on-coral);
+    --step-footer: var(--steps-footer-coral);
   }
 
   .crumb-steps__card--teal {
     --step-bg: var(--steps-teal);
     --step-fg: var(--steps-on-teal);
+    --step-footer: var(--steps-footer-teal);
   }
 
   .crumb-steps__card--mustard {
     --step-bg: var(--steps-mustard);
     --step-fg: var(--steps-on-mustard);
+    --step-footer: var(--steps-footer-mustard);
   }
 
   .crumb-steps__top {
@@ -222,7 +227,7 @@
     border-radius: 0.75rem;
     background: var(--step-bg);
     color: var(--step-fg);
-    font-family: var(--crumb-font-heading);
+    font-family: var(--crumb-font-display);
     font-size: 1.5rem;
     font-weight: 800;
     line-height: 1;
@@ -234,7 +239,14 @@
   .crumb-steps__footer-icon {
     display: inline-flex;
     flex-shrink: 0;
+  }
+
+  .crumb-steps__icon {
     color: var(--steps-muted);
+  }
+
+  .crumb-steps__footer-icon {
+    color: var(--step-footer, var(--steps-ink));
   }
 
   .crumb-steps__icon svg {
@@ -256,29 +268,29 @@
 
   .crumb-steps__title {
     margin: 0;
-    font-family: var(--crumb-font-heading);
+    font-family: var(--crumb-font-display);
     font-size: 1.375rem;
     font-weight: 800;
     line-height: 1.2;
     overflow-wrap: break-word;
   }
 
-  .crumb-steps__description {
+    .crumb-steps__description {
     margin: 0;
     color: var(--steps-muted);
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 0.875rem;
+    line-height: 1.45;
     overflow-wrap: break-word;
   }
 
-  /* margin-top: auto pins the footer to the bottom, so cards stay equal height */
-  .crumb-steps__footer {
+    .crumb-steps__footer {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin: auto 0 0;
     padding-block-start: 0.75rem;
     border-block-start: 2px solid var(--steps-divider);
+    color: var(--step-footer, var(--steps-ink));
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.3;
@@ -323,9 +335,7 @@
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
     .crumb-steps__card,
     .crumb-steps__number {
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .crumb-steps__card:hover {
