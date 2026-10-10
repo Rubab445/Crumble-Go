@@ -2,10 +2,11 @@
   crumb-bundles: "Choose Your Bundle Size"
 
   - Products come from the collection picked in the section settings.
-  - Every value on a card comes from the product or its metafields, so nothing is typed per card.
+  - Every value on a card comes from the product's first available variant or its metafields.
     Calculated on the card: "Save" amount (compare-at minus price) and per-bag price (price / slots).
   - Missing data hides its element: no compare-at (no old price, no Save badge),
     empty badge text (no pill), no features (no checklist), no slot count (no chip, no per-bag).
+  - All merchant-entered text is escaped on output.
   - Sold-out products get a disabled button.
   - No collection, or an empty one: nothing renders on the storefront. The editor shows a hint.
 {%- endcomment -%}
@@ -45,13 +46,13 @@
         {%- if tag_text != blank or heading_text != blank or subtext != blank -%}
           <header class="crumb-bundles__header">
             {%- if tag_text != blank -%}
-              <span class="crumb-bundles__tag">{{ tag_text }}</span>
+              <span class="crumb-bundles__tag">{{ tag_text | escape }}</span>
             {%- endif -%}
             {%- if heading_text != blank -%}
-              <h2 class="crumb-bundles__heading">{{ heading_text }}</h2>
+              <h2 class="crumb-bundles__heading">{{ heading_text | escape }}</h2>
             {%- endif -%}
             {%- if subtext != blank -%}
-              <p class="crumb-bundles__subtext">{{ subtext }}</p>
+              <p class="crumb-bundles__subtext">{{ subtext | escape }}</p>
             {%- endif -%}
           </header>
         {%- endif -%}
@@ -60,6 +61,9 @@
           <ul class="crumb-bundles__grid" role="list">
             {%- for product in bundles.products limit: max_products -%}
               {%- liquid
+                # One variant drives price, compare-at and link, so they can never mismatch.
+                assign variant = product.selected_or_first_available_variant
+
                 # Metafields. Coerce and default so nothing prints blank or NaN.
                 assign slots = product.metafields[mf_namespace][mf_slots].value | default: 0 | plus: 0
                 assign badge_text = product.metafields[mf_namespace][mf_badge].value | strip
@@ -74,8 +78,8 @@
                 endif
 
                 # Money, calculated here so a price change in admin updates the card.
-                assign price = product.price
-                assign compare_at = product.compare_at_price | default: 0
+                assign price = variant.price
+                assign compare_at = variant.compare_at_price | default: 0
                 assign savings = 0
                 if compare_at > price
                   assign savings = compare_at | minus: price
@@ -86,7 +90,8 @@
                   assign per_bag_text = price | times: 1.0 | divided_by: slots | round | money
                 endif
 
-                assign description = product.description | strip_html | strip | truncate: section.settings.description_length
+                # Description is HTML: strip tags, cut, then escape_once so existing entities survive.
+                assign description = product.description | strip_html | strip | truncate: section.settings.description_length | escape_once
 
                 # Button label: {slots} is replaced by the slot count.
                 assign button_text = section.settings.button_label
@@ -101,17 +106,17 @@
 
               <li class="crumb-bundles__card{% if is_highlight %} crumb-bundles__card--highlight{% endif %}">
                 {%- if badge_text != blank -%}
-                  <span class="crumb-bundles__badge">{{ badge_text }}</span>
+                  <span class="crumb-bundles__badge">{{ badge_text | escape }}</span>
                 {%- endif -%}
 
                 {%- if slots > 0 -%}
                   <div class="crumb-bundles__top">
-                    <span class="crumb-bundles__slots">{{ slots }} {{ section.settings.slots_label }}</span>
+                    <span class="crumb-bundles__slots">{{ slots }} {{ section.settings.slots_label | escape }}</span>
                   </div>
                 {%- endif -%}
 
                 <div class="crumb-bundles__body">
-                  <h3 class="crumb-bundles__title">{{ product.title }}</h3>
+                  <h3 class="crumb-bundles__title">{{ product.title | escape }}</h3>
                   {%- if description != blank -%}
                     <p class="crumb-bundles__description">{{ description }}</p>
                   {%- endif -%}
@@ -124,11 +129,11 @@
                       <span class="crumb-bundles__sr-only">Was </span>{{ compare_at | money }}
                     </s>
                     <span class="crumb-bundles__save">
-                      {{ section.settings.save_label }} {{ savings | money_without_trailing_zeros }}
+                      {{ section.settings.save_label | escape }} {{ savings | money_without_trailing_zeros }}
                     </span>
                   {%- endif -%}
                   {%- if per_bag_text != blank -%}
-                    <span class="crumb-bundles__per-bag">({{ per_bag_text }} / {{ section.settings.per_bag_label }})</span>
+                    <span class="crumb-bundles__per-bag">({{ per_bag_text }} / {{ section.settings.per_bag_label | escape }})</span>
                   {%- endif -%}
                 </p>
 
@@ -141,7 +146,7 @@
                           <span class="crumb-bundles__feature-icon" aria-hidden="true">
                             {%- render 'crumb-hero-icon', name: 'check' -%}
                           </span>
-                          <span>{{ feature_text }}</span>
+                          <span>{{ feature_text | escape }}</span>
                         </li>
                       {%- endif -%}
                     {%- endfor -%}
@@ -149,15 +154,15 @@
                 {%- endif -%}
 
                 {%- if product.available -%}
-                  <a class="crumb-bundles__button" href="{{ product.url }}">
-                    {{- button_text }}
+                  <a class="crumb-bundles__button" href="{{ variant.url }}">
+                    {{- button_text | escape }}
                     <span aria-hidden="true">→</span>
-                    <span class="crumb-bundles__sr-only"> – {{ product.title }}</span>
+                    <span class="crumb-bundles__sr-only"> – {{ product.title | escape }}</span>
                   </a>
                 {%- else -%}
                   <button class="crumb-bundles__button" type="button" disabled>
-                    {{- section.settings.sold_out_label }}
-                    <span class="crumb-bundles__sr-only"> – {{ product.title }}</span>
+                    {{- section.settings.sold_out_label | escape }}
+                    <span class="crumb-bundles__sr-only"> – {{ product.title | escape }}</span>
                   </button>
                 {%- endif -%}
               </li>
@@ -387,6 +392,10 @@
   .crumb-bundles__per-bag {
     color: var(--bundles-muted);
     font-size: 0.875rem;
+  }
+
+    .crumb-bundles__per-bag {
+    flex-basis: 100%;
   }
 
   .crumb-bundles__save {
