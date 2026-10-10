@@ -1,0 +1,674 @@
+{%- comment -%}
+  crumb-bundles: "Choose Your Bundle Size"
+
+  - Products come from the collection picked in the section settings.
+  - Every value on a card comes from the product or its metafields, so nothing is typed per card.
+    Calculated on the card: "Save" amount (compare-at minus price) and per-bag price (price / slots).
+  - Missing data hides its element: no compare-at (no old price, no Save badge),
+    empty badge text (no pill), no features (no checklist), no slot count (no chip, no per-bag).
+  - Sold-out products get a disabled button.
+  - No collection, or an empty one: nothing renders on the storefront. The editor shows a hint.
+{%- endcomment -%}
+
+{%- liquid
+  # Metafield keys. Settings > Custom data > Products. Change here only.
+  assign mf_namespace = 'custom'
+  assign mf_slots = 'slot_count'
+  assign mf_features = 'features'
+  assign mf_badge = 'badge_text'
+  assign mf_highlight = 'highlight'
+
+  assign bundles = section.settings.collection
+  assign max_products = section.settings.max_products
+  assign shown_count = 0
+  if bundles != blank
+    assign shown_count = bundles.products_count | at_most: max_products
+  endif
+  assign column_count = shown_count | at_most: 3 | at_least: 1
+
+  assign tag_text = section.settings.tag
+  assign heading_text = section.settings.heading
+  assign subtext = section.settings.subtext
+-%}
+
+{%- if shown_count > 0 or request.design_mode -%}
+  <div
+    class="crumb-bundles"
+    style="
+      --bundles-columns: {{ column_count }};
+      --bundles-padding-top: {{ section.settings.padding_top }}px;
+      --bundles-padding-bottom: {{ section.settings.padding_bottom }}px;
+    "
+  >
+    <div class="crumb-bundles__inner">
+      <div class="crumb-bundles__panel">
+        {%- if tag_text != blank or heading_text != blank or subtext != blank -%}
+          <header class="crumb-bundles__header">
+            {%- if tag_text != blank -%}
+              <span class="crumb-bundles__tag">{{ tag_text }}</span>
+            {%- endif -%}
+            {%- if heading_text != blank -%}
+              <h2 class="crumb-bundles__heading">{{ heading_text }}</h2>
+            {%- endif -%}
+            {%- if subtext != blank -%}
+              <p class="crumb-bundles__subtext">{{ subtext }}</p>
+            {%- endif -%}
+          </header>
+        {%- endif -%}
+
+        {%- if shown_count > 0 -%}
+          <ul class="crumb-bundles__grid" role="list">
+            {%- for product in bundles.products limit: max_products -%}
+              {%- liquid
+                # Metafields. Coerce and default so nothing prints blank or NaN.
+                assign slots = product.metafields[mf_namespace][mf_slots].value | default: 0 | plus: 0
+                assign badge_text = product.metafields[mf_namespace][mf_badge].value | strip
+                assign is_highlight = product.metafields[mf_namespace][mf_highlight].value
+
+                assign features_mf = product.metafields[mf_namespace][mf_features]
+                assign feature_items = ''
+                if features_mf.type contains 'list'
+                  assign feature_items = features_mf.value
+                elsif features_mf.value != blank
+                  assign feature_items = features_mf.value | newline_to_br | split: '<br />'
+                endif
+
+                # Money, calculated here so a price change in admin updates the card.
+                assign price = product.price
+                assign compare_at = product.compare_at_price | default: 0
+                assign savings = 0
+                if compare_at > price
+                  assign savings = compare_at | minus: price
+                endif
+
+                assign per_bag_text = ''
+                if slots > 0 and section.settings.per_bag_label != blank
+                  assign per_bag_text = price | times: 1.0 | divided_by: slots | round | money
+                endif
+
+                assign description = product.description | strip_html | strip | truncate: section.settings.description_length
+
+                # Button label: {slots} is replaced by the slot count.
+                assign button_text = section.settings.button_label
+                if button_text contains '{slots}'
+                  if slots > 0
+                    assign button_text = button_text | replace: '{slots}', slots
+                  else
+                    assign button_text = section.settings.button_label_fallback
+                  endif
+                endif
+              -%}
+
+              <li class="crumb-bundles__card{% if is_highlight %} crumb-bundles__card--highlight{% endif %}">
+                {%- if badge_text != blank -%}
+                  <span class="crumb-bundles__badge">{{ badge_text }}</span>
+                {%- endif -%}
+
+                {%- if slots > 0 -%}
+                  <div class="crumb-bundles__top">
+                    <span class="crumb-bundles__slots">{{ slots }} {{ section.settings.slots_label }}</span>
+                  </div>
+                {%- endif -%}
+
+                <div class="crumb-bundles__body">
+                  <h3 class="crumb-bundles__title">{{ product.title }}</h3>
+                  {%- if description != blank -%}
+                    <p class="crumb-bundles__description">{{ description }}</p>
+                  {%- endif -%}
+                </div>
+
+                <p class="crumb-bundles__pricing">
+                  <span class="crumb-bundles__price">{{ price | money }}</span>
+                  {%- if savings > 0 -%}
+                    <s class="crumb-bundles__compare">
+                      <span class="crumb-bundles__sr-only">Was </span>{{ compare_at | money }}
+                    </s>
+                    <span class="crumb-bundles__save">
+                      {{ section.settings.save_label }} {{ savings | money_without_trailing_zeros }}
+                    </span>
+                  {%- endif -%}
+                  {%- if per_bag_text != blank -%}
+                    <span class="crumb-bundles__per-bag">({{ per_bag_text }} / {{ section.settings.per_bag_label }})</span>
+                  {%- endif -%}
+                </p>
+
+                {%- if feature_items.size > 0 -%}
+                  <ul class="crumb-bundles__features" role="list">
+                    {%- for feature in feature_items -%}
+                      {%- assign feature_text = feature | strip -%}
+                      {%- if feature_text != blank -%}
+                        <li class="crumb-bundles__feature">
+                          <span class="crumb-bundles__feature-icon" aria-hidden="true">
+                            {%- render 'crumb-hero-icon', name: 'check' -%}
+                          </span>
+                          <span>{{ feature_text }}</span>
+                        </li>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if product.available -%}
+                  <a class="crumb-bundles__button" href="{{ product.url }}">
+                    {{- button_text }}
+                    <span aria-hidden="true">→</span>
+                    <span class="crumb-bundles__sr-only"> – {{ product.title }}</span>
+                  </a>
+                {%- else -%}
+                  <button class="crumb-bundles__button" type="button" disabled>
+                    {{- section.settings.sold_out_label }}
+                    <span class="crumb-bundles__sr-only"> – {{ product.title }}</span>
+                  </button>
+                {%- endif -%}
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- elsif request.design_mode -%}
+          <p class="crumb-bundles__empty">
+            Pick your Bundles collection in this section's settings. Its products will show here.
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .crumb-bundles {
+    --bundles-ink: var(--crumb-ink);
+    --bundles-surface: var(--crumb-surface-lowest);
+    --bundles-panel: var(--crumb-surface-container);
+    --bundles-muted: var(--crumb-ink-muted);
+    --bundles-primary: var(--crumb-primary);
+    --bundles-coral: var(--crumb-coral);
+    --bundles-on-coral: var(--crumb-on-coral);
+    --bundles-mustard: var(--crumb-mustard);
+    --bundles-on-mustard: var(--crumb-on-mustard);
+    --bundles-mustard-soft: var(--crumb-mustard-soft);
+    --bundles-on-mustard-soft: var(--crumb-on-mustard-soft);
+    --bundles-mint: var(--crumb-mint);
+    --bundles-on-mint: var(--crumb-on-mint);
+    --bundles-mint-deep: var(--crumb-mint-deep);
+
+    --bundles-border: 2px solid var(--bundles-ink);
+    --bundles-radius: var(--crumb-radius-lg, 0.75rem);
+
+    padding-block: var(--bundles-padding-top) var(--bundles-padding-bottom);
+    font-family: var(--crumb-font-body);
+    color: var(--bundles-ink);
+  }
+
+  /* Gutter is wider than the 6px shadows, so nothing clips.
+     Do not add overflow: hidden to this section, the panel or the grid. */
+  .crumb-bundles__inner {
+    max-inline-size: var(--crumb-container, 80rem);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter, 1rem);
+  }
+
+  .crumb-bundles__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1.5rem 1rem;
+    border: var(--bundles-border);
+    border-radius: 1rem;
+    background: var(--bundles-panel);
+    box-shadow: 6px 6px 0 var(--bundles-ink);
+  }
+
+  /* Header */
+  .crumb-bundles__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-inline-size: 42rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .crumb-bundles__tag {
+    padding: 0.25rem 0.75rem;
+    border: var(--bundles-border);
+    border-radius: 9999px;
+    background: var(--bundles-mustard-soft);
+    color: var(--bundles-on-mustard-soft);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__heading {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .crumb-bundles__subtext {
+    margin: 0;
+    color: var(--bundles-muted);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .crumb-bundles__empty {
+    margin: 0;
+    padding: 1.5rem;
+    border: 2px dashed var(--bundles-ink);
+    border-radius: var(--bundles-radius);
+    text-align: center;
+    color: var(--bundles-muted);
+  }
+
+  /* Grid: one card per row on mobile and tablet, capped width and centered */
+  .crumb-bundles__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 28rem);
+    justify-content: center;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-bundles__card {
+    --card-shadow: 4px 4px 0 var(--bundles-ink);
+    --card-shadow-hover: 6px 6px 0 var(--bundles-ink);
+    --card-lift: 0rem;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-inline-size: 0;
+    padding: 1.25rem;
+    border: var(--bundles-border);
+    border-radius: var(--bundles-radius);
+    background: var(--bundles-surface);
+    box-shadow: var(--card-shadow);
+    transform: translateY(var(--card-lift));
+  }
+
+  /* Raised red border. The raise itself is desktop-only (see media query). */
+  .crumb-bundles__card--highlight {
+    --card-shadow: 0 0 0 2px var(--bundles-coral), 6px 6px 0 var(--bundles-ink);
+    --card-shadow-hover: 0 0 0 2px var(--bundles-coral), 8px 8px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__badge {
+    position: absolute;
+    inset-block-start: -0.875rem;
+    inset-inline-end: 1.25rem;
+    max-inline-size: calc(100% - 2.5rem);
+    padding: 0.25rem 0.75rem;
+    border: var(--bundles-border);
+    border-radius: 1rem;
+    background: var(--bundles-mint);
+    color: var(--bundles-on-mint);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 var(--bundles-ink);
+    transform: rotate(2deg);
+  }
+
+  .crumb-bundles__card--highlight .crumb-bundles__badge {
+    background: var(--bundles-mustard);
+    color: var(--bundles-on-mustard);
+    transform: rotate(-2deg);
+  }
+
+  .crumb-bundles__slots {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--bundles-ink);
+    border-radius: 0.25rem;
+    background: var(--bundles-panel);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .crumb-bundles__card--highlight .crumb-bundles__slots {
+    background: var(--bundles-mustard-soft);
+    color: var(--bundles-on-mustard-soft);
+  }
+
+  .crumb-bundles__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-inline-size: 0;
+  }
+
+  .crumb-bundles__title {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+  }
+
+  .crumb-bundles__description {
+    margin: 0;
+    color: var(--bundles-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+  }
+
+  .crumb-bundles__pricing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem;
+    margin: 0;
+  }
+
+  .crumb-bundles__price {
+    font-family: var(--crumb-font-display);
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .crumb-bundles__compare,
+  .crumb-bundles__per-bag {
+    color: var(--bundles-muted);
+    font-size: 0.875rem;
+  }
+
+  .crumb-bundles__save {
+    padding: 0.125rem 0.375rem;
+    border: 1px solid var(--bundles-mint-deep);
+    border-radius: 0.25rem;
+    background: color-mix(in srgb, var(--bundles-mint) 20%, var(--bundles-surface));
+    color: var(--bundles-mint-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .crumb-bundles__features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--bundles-muted);
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .crumb-bundles__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    overflow-wrap: break-word;
+  }
+
+  .crumb-bundles__feature > span:last-child {
+    min-inline-size: 0;
+  }
+
+  .crumb-bundles__feature-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-block-start: 0.0625rem;
+    color: var(--bundles-primary);
+  }
+
+  .crumb-bundles__feature-icon svg {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+  }
+
+  /* margin-top: auto pins the button to the bottom so cards stay equal height */
+  .crumb-bundles__button {
+    display: block;
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    margin-block-start: auto;
+    padding: 0.75rem 1rem;
+    border: var(--bundles-border);
+    border-radius: 0.5rem;
+    background: var(--bundles-surface);
+    color: var(--bundles-ink);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__button:hover {
+    background: var(--bundles-mustard-soft);
+    box-shadow: 4px 4px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__button:focus-visible {
+    outline: 3px solid var(--bundles-primary);
+    outline-offset: 3px;
+  }
+
+  .crumb-bundles__card--highlight .crumb-bundles__button {
+    background: var(--bundles-coral);
+    color: var(--bundles-on-coral);
+    box-shadow: 4px 4px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__card--highlight .crumb-bundles__button:hover {
+    background: var(--bundles-coral);
+    box-shadow: 5px 5px 0 var(--bundles-ink);
+  }
+
+  .crumb-bundles__button:disabled {
+    background: var(--bundles-panel);
+    color: var(--bundles-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .crumb-bundles__sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-bundles__panel {
+      gap: 2.5rem;
+      padding: 2.5rem;
+    }
+
+    .crumb-bundles__card {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Desktop: one row, column count follows the number of products (1 to 3).
+     Cards are capped at 26rem so one or two products don't stretch. */
+  @media (min-width: 990px) {
+    .crumb-bundles__grid {
+      grid-template-columns: repeat(var(--bundles-columns), minmax(0, 26rem));
+      gap: 1.5rem;
+    }
+
+    .crumb-bundles__card--highlight {
+      --card-lift: -0.5rem;
+    }
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .crumb-bundles__card,
+    .crumb-bundles__button {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .crumb-bundles__card:hover {
+      transform: translateY(calc(var(--card-lift) - 0.25rem));
+      box-shadow: var(--card-shadow-hover);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb bundles",
+  "tag": "section",
+  "class": "crumb-bundles-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Pick your Bundles collection. Products show in the collection's own order."
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "tag",
+      "label": "Tag chip",
+      "default": "Select Your Canvas"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Choose Your Bundle Size"
+    },
+    {
+      "type": "textarea",
+      "id": "subtext",
+      "label": "Subtext",
+      "info": "Leave empty to hide.",
+      "default": "Every bundle comes nestled in our recyclable, cheerful crumb box with custom gift packaging options."
+    },
+    {
+      "type": "header",
+      "content": "Card wording"
+    },
+    {
+      "type": "range",
+      "id": "description_length",
+      "label": "Description length",
+      "info": "Characters kept from the product description.",
+      "min": 40,
+      "max": 200,
+      "step": 10,
+      "default": 100
+    },
+    {
+      "type": "text",
+      "id": "slots_label",
+      "label": "Slot chip word",
+      "default": "Slots"
+    },
+    {
+      "type": "text",
+      "id": "per_bag_label",
+      "label": "Per-item word",
+      "info": "Shows as \"($4.50 / bag)\". Leave empty to hide the per-item price.",
+      "default": "bag"
+    },
+    {
+      "type": "text",
+      "id": "save_label",
+      "label": "Savings word",
+      "default": "Save"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "info": "{slots} is replaced by the product's slot count.",
+      "default": "Build {slots}-Pack Box"
+    },
+    {
+      "type": "text",
+      "id": "button_label_fallback",
+      "label": "Button label without slot count",
+      "default": "Build This Box"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_label",
+      "label": "Sold-out button label",
+      "default": "Sold out"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb bundles"
+    }
+  ]
+}
+{% endschema %}
