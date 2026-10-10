@@ -219,7 +219,7 @@
         "padding_bottom": 48
       }
     },
-    "crumb_bundles_wHQ8mU": {
+    "crumb_bundles_ETzEkV": {
       "type": "crumb-bundles",
       "name": "Crumb bundles",
       "settings": {
@@ -238,11 +238,32 @@
         "padding_top": 48,
         "padding_bottom": 48
       }
+    },
+    "crumb_favorites_dLXUV9": {
+      "type": "crumb-favorites",
+      "name": "Crumb favorites",
+      "settings": {
+        "collection": "fan-favorites",
+        "max_products": 4,
+        "tag": "Small-Batch Vault",
+        "heading": "Discover Fan Favorites",
+        "view_all_collection": "all-items",
+        "view_all_label": "View All {count} Recipes",
+        "view_all_label_short": "View all",
+        "button_label": "Add",
+        "options_label": "Choose options",
+        "sold_out_label": "Sold out",
+        "build_page": "shopify://pages/build-a-box",
+        "description_length": 90,
+        "padding_top": 48,
+        "padding_bottom": 48
+      }
     }
   },
   "order": [
     "crumb_hero",
     "crumb_steps_D6hnGf",
-    "crumb_bundles_wHQ8mU"
+    "crumb_bundles_ETzEkV",
+    "crumb_favorites_dLXUV9"
   ]
 }

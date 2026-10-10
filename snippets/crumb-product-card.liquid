@@ -1,0 +1,513 @@
+{% doc %}
+  Crumb snack card. Used by the Fan Favorites section and, later, the All Items collection page.
+
+  Everything comes from the product. Rating, review count and flavor tag are metafields.
+  Each one hides when empty. All text is escaped on output.
+
+  Add button:
+    - Sold out: disabled button.
+    - Single-variant snack: link to build_url?snack=<handle> (product page if build_url is blank).
+    - Snack with variants: link to the product page, options_label as text.
+
+  @param {product} product - The product to render
+  @param {number} [tint] - 0, 1 or 2. Picks the image placeholder tint and the mobile flavor-tag color
+  @param {string} [build_url] - Build-a-Box page URL
+  @param {string} [button_label] - Add button text
+  @param {string} [options_label] - Button text for snacks with variants
+  @param {string} [sold_out_label] - Disabled button text
+  @param {number} [description_length] - Characters of the product description to keep
+  @param {string} [from_label] - Prefix shown when variant prices differ
+{% enddoc %}
+
+{%- liquid
+  # Metafield keys. Settings > Custom data > Products. Change here only.
+  assign mf_namespace = 'custom'
+  assign mf_rating = 'rating'
+  assign mf_rating_count = 'review_count'
+  assign mf_flavor = 'flavor_tag'
+
+  assign tint_index = tint | default: 0
+  assign add_text = button_label | default: 'Add'
+  assign options_text = options_label | default: 'Choose options'
+  assign sold_out_text = sold_out_label | default: 'Sold out'
+  assign from_text = from_label | default: 'From'
+  assign description_chars = description_length | default: 90
+
+  assign flavor_tag = product.metafields[mf_namespace][mf_flavor].value | strip
+
+  # Rating and count: coerce so nothing prints blank or NaN. Both hide when 0.
+  assign rating = product.metafields[mf_namespace][mf_rating].value | default: 0 | plus: 0
+  assign rating_count = product.metafields[mf_namespace][mf_rating_count].value | default: 0 | plus: 0 | floor
+  assign rating_count_text = rating_count
+  if rating_count >= 1000
+    assign thousands = rating_count | divided_by: 1000
+    assign remainder_text = rating_count | modulo: 1000 | plus: 1000 | append: '' | slice: 1, 3
+    assign rating_count_text = thousands | append: ',' | append: remainder_text
+  endif
+
+  # Description is HTML: strip tags, cut, then escape_once so existing entities survive.
+  assign description = product.description | strip_html | strip | truncate: description_chars | escape_once
+
+  # Where Add goes.
+  assign is_single = product.has_only_default_variant
+  assign action_url = product.url
+  assign action_text = options_text
+  if is_single
+    assign action_text = add_text
+    if build_url != blank
+      assign separator = '?'
+      if build_url contains '?'
+        assign separator = '&'
+      endif
+      assign encoded_handle = product.handle | url_encode
+      assign action_url = build_url | append: separator | append: 'snack=' | append: encoded_handle
+    endif
+  endif
+-%}
+
+<article class="crumb-card crumb-card--tint-{{ tint_index }}">
+  <div class="crumb-card__media">
+    {%- if product.featured_image != blank -%}
+      {%- assign image = product.featured_image -%}
+      <img
+        class="crumb-card__image"
+        src="{{ image | image_url: width: 480 }}"
+        srcset="
+          {{ image | image_url: width: 240 }} 240w,
+          {{ image | image_url: width: 360 }} 360w,
+          {{ image | image_url: width: 480 }} 480w,
+          {{ image | image_url: width: 720 }} 720w
+        "
+        sizes="(min-width: 1280px) 260px, (min-width: 990px) 18vw, (min-width: 750px) 44vw, 46vw"
+        width="{{ image.width }}"
+        height="{{ image.height }}"
+        alt="{{ image.alt | default: product.title | escape }}"
+        loading="lazy"
+        decoding="async"
+      >
+    {%- else -%}
+      <span class="crumb-card__placeholder" aria-hidden="true">
+        {%- render 'crumb-hero-icon', name: 'package' -%}
+      </span>
+    {%- endif -%}
+
+    {%- if flavor_tag != blank -%}
+      <span class="crumb-card__flavor">{{ flavor_tag | escape }}</span>
+    {%- endif -%}
+  </div>
+
+  <div class="crumb-card__body">
+    {%- if rating > 0 -%}
+      <p class="crumb-card__rating">
+        <span class="crumb-card__star" aria-hidden="true">
+          {%- render 'crumb-hero-icon', name: 'star' -%}
+        </span>
+        <span class="crumb-card__rating-value" aria-hidden="true">{{ rating | round: 1 }}</span>
+        {%- if rating_count > 0 -%}
+          <span class="crumb-card__rating-count" aria-hidden="true">({{ rating_count_text }})</span>
+        {%- endif -%}
+        <span class="crumb-card__sr-only">
+          Rated {{ rating | round: 1 }} out of 5
+          {%- if rating_count > 0 %} from {{ rating_count_text }} reviews{% endif -%}
+        </span>
+      </p>
+    {%- endif -%}
+
+    <h3 class="crumb-card__title">
+      <a class="crumb-card__link" href="{{ product.url }}">{{ product.title | escape }}</a>
+    </h3>
+
+    {%- if description != blank -%}
+      <p class="crumb-card__description">{{ description }}</p>
+    {%- endif -%}
+  </div>
+
+  <div class="crumb-card__footer">
+    <p class="crumb-card__price">
+      {%- if product.price_varies -%}
+        <span class="crumb-card__from">{{ from_text | escape }} </span>
+      {%- endif -%}
+      {{- product.price | money -}}
+    </p>
+
+    {%- if product.available -%}
+      <a class="crumb-card__button" href="{{ action_url }}">
+        {%- if is_single -%}
+          <span class="crumb-card__button-icon" aria-hidden="true">
+            {%- render 'crumb-hero-icon', name: 'plus' -%}
+          </span>
+        {%- endif -%}
+        <span>{{ action_text | escape }}</span>
+        <span class="crumb-card__sr-only"> – {{ product.title | escape }}</span>
+      </a>
+    {%- else -%}
+      <button class="crumb-card__button" type="button" disabled>
+        <span>{{ sold_out_text | escape }}</span>
+        <span class="crumb-card__sr-only"> – {{ product.title | escape }}</span>
+      </button>
+    {%- endif -%}
+  </div>
+</article>
+
+{% stylesheet %}
+  .crumb-card {
+    --card-ink: var(--crumb-ink);
+    --card-surface: var(--crumb-surface-lowest);
+    --card-muted: var(--crumb-ink-muted);
+    --card-divider: var(--crumb-surface-container);
+    --card-primary: var(--crumb-primary);
+    --card-coral: var(--crumb-coral);
+    --card-on-coral: var(--crumb-on-coral);
+    --card-mustard: var(--crumb-mustard);
+    --card-on-mustard: var(--crumb-on-mustard);
+    --card-mint: var(--crumb-mint);
+    --card-on-mint: var(--crumb-on-mint);
+    --card-radius: var(--crumb-radius-md, 0.5rem);
+
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-inline-size: 0;
+    border: 2px solid var(--card-ink);
+    border-radius: var(--card-radius);
+    background: var(--card-surface);
+    box-shadow: 3px 3px 0 var(--card-ink);
+    font-family: var(--crumb-font-body);
+    color: var(--card-ink);
+  }
+
+  /* Image. overflow: hidden lives on this wrapper only, never on the card,
+     so the card's hard shadow is never clipped. */
+  .crumb-card__media {
+    position: relative;
+    flex-shrink: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-block-end: 2px solid var(--card-ink);
+    border-radius: calc(var(--card-radius) - 2px) calc(var(--card-radius) - 2px) 0 0;
+  }
+
+  .crumb-card--tint-0 .crumb-card__media {
+    background: color-mix(in srgb, var(--card-mustard) 25%, var(--card-surface));
+  }
+
+  .crumb-card--tint-1 .crumb-card__media {
+    background: color-mix(in srgb, var(--card-mint) 25%, var(--card-surface));
+  }
+
+  .crumb-card--tint-2 .crumb-card__media {
+    background: color-mix(in srgb, var(--card-coral) 25%, var(--card-surface));
+  }
+
+  .crumb-card__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .crumb-card__placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--card-muted);
+    opacity: 0.6;
+  }
+
+  .crumb-card__placeholder svg {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+  }
+
+  /* Flavor tag. Mobile design colors it by position; desktop is a plain white chip. */
+  .crumb-card__flavor {
+    position: absolute;
+    inset-block-start: 0.375rem;
+    inset-inline-start: 0.375rem;
+    max-inline-size: calc(100% - 0.75rem);
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--card-ink);
+    border-radius: 0.25rem;
+    background: var(--card-mustard);
+    color: var(--card-on-mustard);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.3;
+    box-shadow: 1px 1px 0 var(--card-ink);
+  }
+
+  .crumb-card--tint-1 .crumb-card__flavor {
+    background: var(--card-mint);
+    color: var(--card-on-mint);
+  }
+
+  .crumb-card--tint-2 .crumb-card__flavor {
+    background: var(--card-primary);
+    color: var(--card-surface);
+  }
+
+  .crumb-card__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    padding: 0.625rem 0.625rem 0;
+  }
+
+  .crumb-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .crumb-card__star {
+    display: inline-flex;
+    color: var(--card-mustard);
+  }
+
+  .crumb-card__star svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  .crumb-card__rating-value {
+    font-weight: 700;
+  }
+
+  .crumb-card__rating-count {
+    display: none;
+    color: var(--card-muted);
+  }
+
+  /* Compact mobile title: two lines at most. The link's ::after is positioned
+     against the card, so the clamp's overflow does not clip it. */
+  .crumb-card__title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--crumb-font-display);
+    font-size: 0.9375rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+  }
+
+  /* Whole card is clickable: the title link stretches over the card.
+     The Add button sits above it (z-index) and is never nested inside the link. */
+  .crumb-card__link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .crumb-card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--card-radius);
+  }
+
+  .crumb-card__link:focus-visible {
+    outline: none;
+  }
+
+  .crumb-card__link:focus-visible::after {
+    outline: 3px solid var(--card-primary);
+    outline-offset: 3px;
+  }
+
+  .crumb-card__description {
+    display: none;
+    margin: 0;
+    color: var(--card-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    overflow-wrap: break-word;
+  }
+
+  .crumb-card__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem 0.625rem;
+  }
+
+  .crumb-card__price {
+    margin: 0;
+    color: var(--card-muted);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .crumb-card__from {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .crumb-card__button {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    inline-size: 100%;
+    min-block-size: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--card-ink);
+    border-radius: 0.5rem;
+    background: var(--card-coral);
+    color: var(--card-on-coral);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--card-ink);
+  }
+
+  .crumb-card__button:hover {
+    box-shadow: 3px 3px 0 var(--card-ink);
+  }
+
+  .crumb-card__button:active {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--card-ink);
+  }
+
+  .crumb-card__button:focus-visible {
+    outline: 3px solid var(--card-primary);
+    outline-offset: 3px;
+  }
+
+  .crumb-card__button:disabled {
+    background: var(--card-divider);
+    color: var(--card-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .crumb-card__button-icon {
+    display: inline-flex;
+  }
+
+  .crumb-card__button-icon svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
+  .crumb-card__sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Desktop card. Its own design, not a scaled-up mobile card. */
+  @media (min-width: 750px) {
+    .crumb-card {
+      padding: 1rem;
+      border-radius: var(--crumb-radius-lg, 0.75rem);
+      box-shadow: 4px 4px 0 var(--card-ink);
+    }
+
+    .crumb-card__media {
+      aspect-ratio: 5 / 4;
+      margin-block-end: 1rem;
+      border: 2px solid var(--card-ink);
+      border-radius: var(--card-radius);
+    }
+
+    .crumb-card__flavor,
+    .crumb-card--tint-1 .crumb-card__flavor,
+    .crumb-card--tint-2 .crumb-card__flavor {
+      inset-block-start: 0.5rem;
+      inset-inline-start: 0.5rem;
+      background: var(--card-surface);
+      color: var(--card-ink);
+    }
+
+    .crumb-card__body {
+      padding: 0;
+    }
+
+    .crumb-card__rating-count {
+      display: inline;
+    }
+
+    .crumb-card__star svg {
+      inline-size: 1rem;
+      block-size: 1rem;
+    }
+
+    .crumb-card__title {
+      display: block;
+      overflow: visible;
+      font-size: 1.25rem;
+    }
+
+    .crumb-card__description {
+      display: block;
+      margin-block-end: 0.5rem;
+    }
+
+    .crumb-card__footer {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 0 0;
+      border-block-start: 2px solid var(--card-divider);
+    }
+
+    .crumb-card__price {
+      color: var(--card-ink);
+      font-family: var(--crumb-font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .crumb-card__button {
+      inline-size: auto;
+      min-block-size: 2.25rem;
+      padding: 0.375rem 0.75rem;
+    }
+  }
+
+  /* Motion only when the visitor hasn't asked for less of it. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .crumb-card,
+    .crumb-card__button {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .crumb-card__image {
+      transition: transform 0.3s ease;
+    }
+
+    .crumb-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 6px 6px 0 var(--card-ink);
+    }
+
+    .crumb-card:hover .crumb-card__image {
+      transform: scale(1.05);
+    }
+  }
+{% endstylesheet %}

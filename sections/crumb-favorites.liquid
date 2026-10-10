@@ -1,0 +1,432 @@
+{%- comment -%}
+  crumb-favorites: "Discover Fan Favorites"
+
+  - Cards come from the "Fan favorites" collection, in the collection's own order.
+  - "View all" link and its {count} come from a second collection (All Items),
+    because the Fan Favorites collection holds only 4 snacks.
+  - Each card is the crumb-product-card snippet.
+  - Blank settings hide their element. No collection: nothing renders on the storefront,
+    and the editor shows a hint.
+{%- endcomment -%}
+
+{%- liquid
+  assign favorites = section.settings.collection
+  assign max_products = section.settings.max_products
+  assign shown_count = 0
+  if favorites != blank
+    assign shown_count = favorites.products_count | at_most: max_products
+  endif
+  assign column_count = shown_count | at_most: 4 | at_least: 1
+
+  assign tag_text = section.settings.tag
+  assign heading_text = section.settings.heading
+
+  # "View all": the {count} placeholder is replaced by the All Items collection's product count.
+  assign view_all = section.settings.view_all_collection
+  assign view_all_count = 0
+  if view_all != blank
+    assign view_all_count = view_all.products_count
+  endif
+  assign long_text = section.settings.view_all_label | replace: '{count}', view_all_count
+  assign short_text = section.settings.view_all_label_short | replace: '{count}', view_all_count
+  if long_text == blank
+    assign long_text = short_text
+  endif
+  if short_text == blank
+    assign short_text = long_text
+  endif
+  assign show_view_all = false
+  if view_all != blank and view_all_count > 0 and long_text != blank
+    assign show_view_all = true
+  endif
+-%}
+
+{%- if shown_count > 0 or request.design_mode -%}
+  <div
+    class="crumb-favorites"
+    style="
+      --favorites-columns: {{ column_count }};
+      --favorites-padding-top: {{ section.settings.padding_top }}px;
+      --favorites-padding-bottom: {{ section.settings.padding_bottom }}px;
+    "
+  >
+    <div class="crumb-favorites__inner">
+      {%- if tag_text != blank or heading_text != blank or show_view_all -%}
+        <header class="crumb-favorites__header">
+          <div class="crumb-favorites__intro">
+            {%- if tag_text != blank -%}
+              <span class="crumb-favorites__tag">
+                <span class="crumb-favorites__tag-icon" aria-hidden="true">
+                  {%- render 'crumb-hero-icon', name: 'flame' -%}
+                </span>
+                <span>{{ tag_text | escape }}</span>
+              </span>
+            {%- endif -%}
+            {%- if heading_text != blank -%}
+              <h2 class="crumb-favorites__heading">{{ heading_text | escape }}</h2>
+            {%- endif -%}
+          </div>
+
+          {%- if show_view_all -%}
+            <a class="crumb-favorites__view-all" href="{{ view_all.url }}">
+              <span class="crumb-favorites__view-all-long">{{ long_text | escape }}</span>
+              <span class="crumb-favorites__view-all-short">{{ short_text | escape }}</span>
+              <span class="crumb-favorites__view-all-icon" aria-hidden="true">
+                {%- render 'crumb-hero-icon', name: 'arrow' -%}
+              </span>
+            </a>
+          {%- endif -%}
+        </header>
+      {%- endif -%}
+
+      {%- if shown_count > 0 -%}
+        <ul class="crumb-favorites__grid" role="list">
+          {%- for product in favorites.products limit: max_products -%}
+            {%- assign tint = forloop.index0 | modulo: 3 -%}
+            <li class="crumb-favorites__item">
+              {%- render 'crumb-product-card',
+                product: product,
+                tint: tint,
+                build_url: section.settings.build_page,
+                button_label: section.settings.button_label,
+                options_label: section.settings.options_label,
+                sold_out_label: section.settings.sold_out_label,
+                description_length: section.settings.description_length
+              -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- elsif request.design_mode -%}
+        <p class="crumb-favorites__empty">
+          Pick your Fan favorites collection in this section's settings. Its snacks will show here.
+        </p>
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .crumb-favorites {
+    --fav-ink: var(--crumb-ink);
+    --fav-surface: var(--crumb-surface-lowest);
+    --fav-muted: var(--crumb-ink-muted);
+    --fav-primary: var(--crumb-primary);
+    --fav-mint: var(--crumb-mint);
+
+    padding-block: var(--favorites-padding-top) var(--favorites-padding-bottom);
+    font-family: var(--crumb-font-body);
+    color: var(--fav-ink);
+  }
+
+  /* Gutter is wider than the card shadows, so nothing clips.
+     Do not add overflow: hidden to this section or the grid. */
+  .crumb-favorites__inner {
+    max-inline-size: var(--crumb-container, 80rem);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter, 1rem);
+  }
+
+  /* Header. Mobile: plain tag + heading + text link. */
+  .crumb-favorites__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .crumb-favorites__intro {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-inline-size: 0;
+  }
+
+  .crumb-favorites__tag {
+    color: var(--fav-primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .crumb-favorites__tag-icon {
+    display: none;
+  }
+
+  .crumb-favorites__tag-icon svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  .crumb-favorites__heading {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .crumb-favorites__view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-block-size: 2.75rem;
+    color: var(--fav-primary);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .crumb-favorites__view-all:focus-visible {
+    outline: 3px solid var(--fav-primary);
+    outline-offset: 3px;
+  }
+
+  .crumb-favorites__view-all-long {
+    display: none;
+  }
+
+  .crumb-favorites__view-all-icon svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
+  .crumb-favorites__empty {
+    margin: 0;
+    padding: 1.5rem;
+    border: 2px dashed var(--fav-ink);
+    border-radius: var(--crumb-radius-lg, 0.75rem);
+    text-align: center;
+    color: var(--fav-muted);
+  }
+
+  /* Mobile: its own 2 x 2 layout */
+  .crumb-favorites__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-favorites__item {
+    display: flex;
+    min-inline-size: 0;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-favorites__header {
+      gap: 0.75rem 1.5rem;
+      margin-block-end: 1.5rem;
+    }
+
+    .crumb-favorites__intro {
+      gap: 0.5rem;
+    }
+
+    .crumb-favorites__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.125rem 0.625rem;
+      border: 2px solid var(--fav-ink);
+      border-radius: 0.25rem;
+      background: color-mix(in srgb, var(--fav-mint) 30%, var(--fav-surface));
+      color: var(--fav-ink);
+      box-shadow: 2px 2px 0 var(--fav-ink);
+      transform: rotate(1deg);
+    }
+
+    .crumb-favorites__tag-icon {
+      display: inline-flex;
+    }
+
+    .crumb-favorites__view-all {
+      min-block-size: 2.5rem;
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--fav-ink);
+      border-radius: 0.5rem;
+      background: var(--fav-surface);
+      color: var(--fav-ink);
+      gap: 0.5rem;
+      box-shadow: 3px 3px 0 var(--fav-ink);
+    }
+
+    .crumb-favorites__view-all:hover {
+      box-shadow: 4px 4px 0 var(--fav-ink);
+    }
+
+    .crumb-favorites__view-all:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0 0 0 var(--fav-ink);
+    }
+
+    .crumb-favorites__view-all-long {
+      display: inline;
+    }
+
+    .crumb-favorites__view-all-short {
+      display: none;
+    }
+
+    .crumb-favorites__view-all-icon svg {
+      inline-size: 1.125rem;
+      block-size: 1.125rem;
+    }
+
+    .crumb-favorites__grid {
+      gap: 1.5rem;
+    }
+  }
+
+  /* Desktop: one row, column count follows the number of snacks (1 to 4).
+     Cards are capped at 20rem so one to three snacks don't stretch. */
+  @media (min-width: 990px) {
+    .crumb-favorites__grid {
+      grid-template-columns: repeat(var(--favorites-columns), minmax(0, 20rem));
+      justify-content: start;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb favorites",
+  "tag": "section",
+  "class": "crumb-favorites-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Pick your Fan favorites collection. Snacks show in the collection's own order."
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products",
+      "min": 4,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "tag",
+      "label": "Tag chip",
+      "default": "Small-Batch Vault"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Discover Fan Favorites"
+    },
+    {
+      "type": "header",
+      "content": "View all link"
+    },
+    {
+      "type": "collection",
+      "id": "view_all_collection",
+      "label": "View all collection",
+      "info": "Pick your All Items collection. It sets the link and the {count} number. Without it, the link is hidden."
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "Label (tablet and desktop)",
+      "info": "{count} is replaced by the number of products in the collection above.",
+      "default": "View All {count} Recipes"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label_short",
+      "label": "Label (mobile)",
+      "default": "View all"
+    },
+    {
+      "type": "header",
+      "content": "Card wording"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Add button label",
+      "default": "Add"
+    },
+    {
+      "type": "text",
+      "id": "options_label",
+      "label": "Button label for snacks with variants",
+      "info": "These open the product page so the shopper can choose.",
+      "default": "Choose options"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_label",
+      "label": "Sold-out button label",
+      "default": "Sold out"
+    },
+    {
+      "type": "url",
+      "id": "build_page",
+      "label": "Build-a-Box page",
+      "info": "Snacks link here as ?snack=handle. Leave empty until the page exists. Add then opens the product page."
+    },
+    {
+      "type": "range",
+      "id": "description_length",
+      "label": "Description length",
+      "info": "Characters kept from the product description. Hidden on mobile.",
+      "min": 40,
+      "max": 160,
+      "step": 10,
+      "default": 90
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb favorites"
+    }
+  ]
+}
+{% endschema %}
