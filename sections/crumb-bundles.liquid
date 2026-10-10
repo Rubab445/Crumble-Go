@@ -18,6 +18,7 @@
   assign mf_features = 'features'
   assign mf_badge = 'badge_text'
   assign mf_highlight = 'highlight'
+  assign mf_label = 'card_label'
 
   assign bundles = section.settings.collection
   assign max_products = section.settings.max_products
@@ -67,6 +68,7 @@
                 # Metafields. Coerce and default so nothing prints blank or NaN.
                 assign slots = product.metafields[mf_namespace][mf_slots].value | default: 0 | plus: 0
                 assign badge_text = product.metafields[mf_namespace][mf_badge].value | strip
+                assign card_label = product.metafields[mf_namespace][mf_label].value | strip
                 assign is_highlight = product.metafields[mf_namespace][mf_highlight].value
 
                 assign features_mf = product.metafields[mf_namespace][mf_features]
@@ -109,9 +111,17 @@
                   <span class="crumb-bundles__badge">{{ badge_text | escape }}</span>
                 {%- endif -%}
 
-                {%- if slots > 0 -%}
+                {%- if slots > 0 or card_label != blank -%}
                   <div class="crumb-bundles__top">
-                    <span class="crumb-bundles__slots">{{ slots }} {{ section.settings.slots_label | escape }}</span>
+                    {%- if slots > 0 -%}
+                      <span class="crumb-bundles__slots">
+                        {{- slots }}
+                        {{ section.settings.slots_label | escape -}}
+                      </span>
+                    {%- endif -%}
+                    {%- if card_label != blank -%}
+                      <span class="crumb-bundles__label">{{ card_label | escape }}</span>
+                    {%- endif -%}
                   </div>
                 {%- endif -%}
 
@@ -129,11 +139,14 @@
                       <span class="crumb-bundles__sr-only">Was </span>{{ compare_at | money }}
                     </s>
                     <span class="crumb-bundles__save">
-                      {{ section.settings.save_label | escape }} {{ savings | money_without_trailing_zeros }}
+                      {{ section.settings.save_label | escape }}
+                      {{ savings | money_without_trailing_zeros }}
                     </span>
                   {%- endif -%}
                   {%- if per_bag_text != blank -%}
-                    <span class="crumb-bundles__per-bag">({{ per_bag_text }} / {{ section.settings.per_bag_label | escape }})</span>
+                    <span class="crumb-bundles__per-bag"
+                      >({{ per_bag_text }} / {{ section.settings.per_bag_label | escape }})</span
+                    >
                   {%- endif -%}
                 </p>
 
@@ -344,6 +357,31 @@
     line-height: 1.2;
   }
 
+    .crumb-bundles__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .crumb-bundles__label {
+    min-inline-size: 0;
+    margin-inline-start: auto;
+    color: var(--bundles-muted);
+    font-size: 0.715rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    text-align: end;
+    text-transform: uppercase;
+    overflow-wrap: break-word;
+  }
+
+  .crumb-bundles__card--highlight .crumb-bundles__label {
+    color: var(--bundles-primary);
+  }
+
   .crumb-bundles__card--highlight .crumb-bundles__slots {
     background: var(--bundles-mustard-soft);
     color: var(--bundles-on-mustard-soft);
@@ -394,7 +432,7 @@
     font-size: 0.875rem;
   }
 
-    .crumb-bundles__per-bag {
+  .crumb-bundles__per-bag {
     flex-basis: 100%;
   }
 
