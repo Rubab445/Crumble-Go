@@ -113,53 +113,17 @@
             <p class="crumb-footer__newsletter-text">{{ section.settings.newsletter_text }}</p>
           {%- endif -%}
 
-          {%- form 'customer', class: 'crumb-footer__newsletter-form' -%}
-            <input type="hidden" name="contact[tags]" value="newsletter">
-
-            <div class="crumb-footer__newsletter-body" aria-live="polite">
-              <div class="crumb-footer__newsletter-row">
-                <label class="visually-hidden" for="CrumbNewsletterEmail-{{ section.id }}">
-                  {{ 'blocks.email_signup.label' | t }}
-                </label>
-                <input
-                  id="CrumbNewsletterEmail-{{ section.id }}"
-                  class="crumb-footer__newsletter-input"
-                  type="email"
-                  name="contact[email]"
-                  autocorrect="off"
-                  autocapitalize="off"
-                  autocomplete="email"
-                  placeholder="{{ 'blocks.email_signup.placeholder' | t }}"
-                  required
-                  {% if form.errors %}
-                    aria-invalid="true"
-                    aria-describedby="CrumbNewsletterError-{{ section.id }}"
-                  {% endif %}
-                >
-                <button type="submit" class="crumb-footer__newsletter-button">
-                  {%- if section.settings.newsletter_button_label != blank -%}
-                    {{ section.settings.newsletter_button_label }}
-                  {%- else -%}
-                    {{ 'actions.sign_up' | t }}
-                  {%- endif -%}
-                </button>
-              </div>
-
-              {%- if form.errors -%}
-                <p
-                  id="CrumbNewsletterError-{{ section.id }}"
-                  class="crumb-footer__newsletter-message crumb-footer__newsletter-message--error"
-                >
-                  {{ form.errors.translated_fields.email | capitalize }}
-                  {{ form.errors.messages.email }}
-                </p>
-              {%- elsif form.posted_successfully? -%}
-                <p class="crumb-footer__newsletter-message crumb-footer__newsletter-message--success" role="status">
-                  {{ 'blocks.email_signup.success' | t }}
-                </p>
-              {%- endif -%}
-            </div>
-          {%- endform -%}
+          {%- liquid
+            assign footer_form_id = 'CrumbFooterNewsletter-' | append: section.id
+            assign footer_placeholder = 'blocks.email_signup.placeholder' | t
+          -%}
+          {%- render 'crumb-newsletter-form',
+            variant: 'footer',
+            form_id: footer_form_id,
+            placeholder: footer_placeholder,
+            button_label: section.settings.newsletter_button_label,
+            button_label_short: section.settings.newsletter_button_label_short
+          -%}
         </div>
       </div>
     </div>
@@ -367,84 +331,6 @@
     line-height: 1.4;
   }
 
-  .crumb-footer__newsletter-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--crumb-space-sm);
-  }
-
-  .crumb-footer__newsletter-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--crumb-space-sm);
-  }
-
-  .crumb-footer__newsletter-input {
-    box-sizing: border-box;
-    width: 100%;
-    padding: 0.625rem var(--crumb-space-sm);
-    background: var(--crumb-surface);
-    color: var(--crumb-ink);
-    border: var(--crumb-border);
-    border-radius: var(--crumb-radius-md);
-    font-family: var(--crumb-font-body);
-    font-size: 0.875rem;
-    transition: box-shadow var(--crumb-transition);
-  }
-
-  .crumb-footer__newsletter-input::placeholder {
-    color: var(--crumb-ink-muted);
-  }
-
-  .crumb-footer__newsletter-input:focus-visible {
-    outline: 3px solid var(--crumb-primary);
-    outline-offset: 2px;
-  }
-
-  .crumb-footer__newsletter-button {
-    box-sizing: border-box;
-    padding: 0.625rem var(--crumb-space-md);
-    background: var(--crumb-coral);
-    color: var(--crumb-on-coral);
-    border: var(--crumb-border);
-    border-radius: var(--crumb-radius-md);
-    box-shadow: var(--crumb-shadow-sm);
-    font-family: var(--crumb-font-body);
-    font-size: 0.875rem;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: box-shadow var(--crumb-transition), transform var(--crumb-transition);
-  }
-
-  .crumb-footer__newsletter-button:hover {
-    box-shadow: var(--crumb-shadow-md);
-  }
-
-  .crumb-footer__newsletter-button:active {
-    box-shadow: var(--crumb-shadow-none);
-    transform: translate(2px, 2px);
-  }
-
-  .crumb-footer__newsletter-button:focus-visible {
-    outline: 3px solid var(--crumb-primary);
-    outline-offset: 2px;
-  }
-
-  .crumb-footer__newsletter-message {
-    margin: 0;
-    font-size: 0.8125rem;
-    font-weight: 700;
-  }
-
-  .crumb-footer__newsletter-message--success {
-    color: var(--crumb-mint);
-  }
-
-  .crumb-footer__newsletter-message--error {
-    color: var(--crumb-primary);
-  }
-
   /* --- Bottom row ---------------------------------------------------------- */
 
   .crumb-footer__bottom {
@@ -506,14 +392,6 @@
 
     .crumb-footer__about {
       grid-column: auto;
-    }
-
-    .crumb-footer__newsletter-row {
-      flex-direction: row;
-    }
-
-    .crumb-footer__newsletter-input {
-      flex: 1 1 auto;
     }
   }
 
@@ -591,6 +469,13 @@
       "label": "Button label",
       "info": "Leave blank to use the default \"Sign up\" label.",
       "default": "Snack In"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_button_label_short",
+      "label": "Button label (mobile)",
+      "info": "Leave blank to use the desktop label.",
+      "default": "Join"
     },
     {
       "type": "header",

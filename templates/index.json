@@ -219,7 +219,7 @@
         "padding_bottom": 48
       }
     },
-    "crumb_bundles_wHQ8mU": {
+    "crumb_bundles_ETzEkV": {
       "type": "crumb-bundles",
       "name": "Crumb bundles",
       "settings": {
@@ -239,7 +239,7 @@
         "padding_bottom": 48
       }
     },
-    "crumb_favorites_qAh37V": {
+    "crumb_favorites_dLXUV9": {
       "type": "crumb-favorites",
       "name": "Crumb favorites",
       "settings": {
@@ -253,28 +253,28 @@
         "button_label": "Add",
         "options_label": "Choose options",
         "sold_out_label": "Sold out",
-        "build_page": "",
+        "build_page": "shopify://pages/build-a-box",
         "description_length": 90,
         "padding_top": 48,
         "padding_bottom": 48
       }
     },
-    "crumb_testimonials_GxbrTK": {
+    "crumb_testimonials_aNwAmj": {
       "type": "crumb-testimonials",
       "blocks": {
-        "testimonial_9k8MEN": {
+        "testimonial_LVhFMP": {
           "type": "testimonial",
           "settings": {
             "rating": 5,
             "quote_title": "Pick 6. Regret nothing! The truffle almonds are completely insane.",
             "quote_body": "I built a 6-pack for my WFH desk. The bags didn’t even survive Wednesday. Absolutely unputdownable quality and zero greasy residue.",
             "name": "Maya Lin",
-            "role": "Verified 6-Pack Builder",
+            "role": "Sample",
             "verified_long": "Verified 6-Pack Builder",
-            "verified_short": "Verified Buyer"
+            "verified_short": "Verified Builder"
           }
         },
-        "testimonial_Y6wCaT": {
+        "testimonial_yneW6K": {
           "type": "testimonial",
           "settings": {
             "rating": 5,
@@ -286,23 +286,23 @@
             "verified_short": ""
           }
         },
-        "testimonial_EGbKqg": {
+        "testimonial_ihk47e": {
           "type": "testimonial",
           "settings": {
             "rating": 4,
             "quote_title": "Finally, clean snacking that doesn’t taste like cardboard.",
             "quote_body": "My kids adore the Berry Crunch and I hide the dark chocolate clusters in my top drawer. It feels so reassuring reading short ingredient lists.",
             "name": "Sarah N.",
-            "role": "Monthly Snack Crafter",
+            "role": "Sample",
             "verified_long": "Monthly Snack Crafter",
-            "verified_short": ""
+            "verified_short": "Monthly  Crafter"
           }
         }
       },
       "block_order": [
-        "testimonial_9k8MEN",
-        "testimonial_Y6wCaT",
-        "testimonial_EGbKqg"
+        "testimonial_LVhFMP",
+        "testimonial_yneW6K",
+        "testimonial_ihk47e"
       ],
       "name": "Crumb testimonials",
       "settings": {
@@ -314,13 +314,32 @@
         "padding_top": 48,
         "padding_bottom": 48
       }
+    },
+    "crumb_newsletter_LwWiiY": {
+      "type": "crumb-newsletter",
+      "name": "Crumb newsletter",
+      "settings": {
+        "tag_long": "Instant $5 off first box",
+        "tag_short": "VIP Snack Pass",
+        "heading": "Join The Crumb Club",
+        "text": "Get secret flavor previews, early access to limited seasonal recipe drops, and $5 off your very first custom snack bundle!",
+        "privacy": "We respect your inbox. No spam, only crunch. Unsubscribe anytime.",
+        "placeholder": "you@example.com",
+        "button_label": "Claim $5 Off",
+        "button_label_short": "Claim",
+        "success_message": "You're in the Club! Use code CRUMB5 at checkout for $5 off your first box.",
+        "error_message": "Error",
+        "padding_top": 48,
+        "padding_bottom": 48
+      }
     }
   },
   "order": [
     "crumb_hero",
     "crumb_steps_D6hnGf",
-    "crumb_bundles_wHQ8mU",
-    "crumb_favorites_qAh37V",
-    "crumb_testimonials_GxbrTK"
+    "crumb_bundles_ETzEkV",
+    "crumb_favorites_dLXUV9",
+    "crumb_testimonials_aNwAmj",
+    "crumb_newsletter_LwWiiY"
   ]
 }

@@ -1,0 +1,364 @@
+{%- comment -%}
+  crumb-newsletter: "Join The Crumb Club" panel.
+
+  - Every text field hides when blank (tag, heading, text, privacy line).
+    Placeholder blank = no placeholder.
+  - Blank button, success or error text falls back to a default, because a
+    silent form would be a broken form.
+  - The form itself is snippets/crumb-newsletter-form.liquid (shared with the footer).
+  - The circles live in their own clipping wrapper. The panel keeps its hard
+    shadow, and the circles can't cause horizontal scroll.
+{%- endcomment -%}
+
+{%- liquid
+  assign tag_long = section.settings.tag_long | strip
+  assign tag_short = section.settings.tag_short | strip
+  assign heading = section.settings.heading | strip
+  assign body_text = section.settings.text | strip
+  assign privacy = section.settings.privacy | strip
+
+  if tag_long == blank
+    assign tag_long = tag_short
+  endif
+
+  assign form_id = 'CrumbClub-' | append: section.id
+-%}
+
+<section
+  class="crumb-club-wrap"
+  {% if heading != blank %}aria-labelledby="crumb-club-heading-{{ section.id }}"{% endif %}
+  style="
+    --cc-padding-top: {{ section.settings.padding_top }}px;
+    --cc-padding-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="crumb-club__inner">
+    <div class="crumb-club">
+
+      <div class="crumb-club__decor" aria-hidden="true">
+        <span class="crumb-club__circle crumb-club__circle--a"></span>
+        <span class="crumb-club__circle crumb-club__circle--b"></span>
+      </div>
+
+      <div class="crumb-club__content">
+        {%- if tag_long != blank -%}
+          <p class="crumb-club__tag">
+            <svg class="crumb-club__tag-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm8 7.2L5 7.4V17h14V7.4l-7 4.8zM6.3 7L12 10.9 17.7 7H6.3z"/>
+            </svg>
+            {%- if tag_short != blank and tag_short != tag_long -%}
+              <span class="crumb-club__long">{{ tag_long | escape }}</span>
+              <span class="crumb-club__short">{{ tag_short | escape }}</span>
+            {%- else -%}
+              <span>{{ tag_long | escape }}</span>
+            {%- endif -%}
+          </p>
+        {%- endif -%}
+
+        {%- if heading != blank -%}
+          <h2 class="crumb-club__heading" id="crumb-club-heading-{{ section.id }}">{{ heading | escape }}</h2>
+        {%- endif -%}
+
+        {%- if body_text != blank -%}
+          <p class="crumb-club__text">{{ body_text | escape }}</p>
+        {%- endif -%}
+
+        <div class="crumb-club__form">
+          {%- render 'crumb-newsletter-form',
+            variant: 'panel',
+            form_id: form_id,
+            placeholder: section.settings.placeholder,
+            button_label: section.settings.button_label,
+            button_label_short: section.settings.button_label_short,
+            show_arrow: true,
+            success_message: section.settings.success_message,
+            error_message: section.settings.error_message
+          -%}
+        </div>
+
+        {%- if privacy != blank -%}
+          <p class="crumb-club__privacy">{{ privacy | escape }}</p>
+        {%- endif -%}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .crumb-club-wrap {
+    padding-block: var(--cc-padding-top, 0) var(--cc-padding-bottom, 0);
+    font-family: var(--crumb-font-body);
+  }
+
+  /* Gutter is wider than the hard shadow, so the shadow never clips.
+     Do not add overflow to .crumb-club or its wrappers. */
+  .crumb-club__inner {
+    max-inline-size: var(--crumb-container, 80rem);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter, 1rem);
+  }
+
+  .crumb-club {
+    /* Mobile uses the deeper yellow, desktop the soft one, as in the two mockups */
+    --cc-bg: var(--crumb-mustard);
+    --cc-circle: var(--crumb-mustard-soft);
+    --cc-radius: var(--crumb-radius-lg);
+
+    position: relative;
+    padding: 1rem;
+    color: var(--crumb-ink);
+    background: var(--cc-bg);
+    border: var(--crumb-border);
+    border-radius: var(--cc-radius);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  @media (min-width: 750px) {
+    .crumb-club {
+      --cc-bg: var(--crumb-mustard-soft);
+      --cc-circle: var(--crumb-mustard);
+      padding: 2rem;
+      box-shadow: var(--crumb-shadow-lg);
+    }
+  }
+
+  @media (min-width: 990px) {
+    .crumb-club { padding: 3rem; }
+  }
+
+  /* Clipping wrapper: the shadow stays on .crumb-club, only the circles are clipped */
+  .crumb-club__decor {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    overflow: clip;
+    border-radius: calc(var(--cc-radius) - 2px);
+    pointer-events: none;
+  }
+
+  .crumb-club__circle {
+    position: absolute;
+    background: var(--cc-circle);
+    border: var(--crumb-border);
+    border-radius: 50%;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .crumb-club__circle--a {
+    inline-size: 8rem;
+    block-size: 8rem;
+    inset-inline-end: -1.5rem;
+    inset-block-end: -1.5rem;
+  }
+
+  .crumb-club__circle--b {
+    inline-size: 4.5rem;
+    block-size: 4.5rem;
+    inset-inline-start: -1.25rem;
+    inset-block-start: -1.25rem;
+  }
+
+  .crumb-club__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    text-align: start;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-club__content {
+      align-items: center;
+      gap: 1rem;
+      max-inline-size: 48rem;
+      margin-inline: auto;
+      text-align: center;
+    }
+  }
+
+  .crumb-club__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--crumb-ink);
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-xs);
+    transform: rotate(1deg);
+  }
+
+  .crumb-club__tag-icon { display: none; flex-shrink: 0; fill: var(--crumb-primary); }
+
+  @media (min-width: 750px) {
+    .crumb-club__tag {
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--crumb-radius-full);
+      box-shadow: var(--crumb-shadow-sm);
+      transform: rotate(-1deg);
+    }
+    .crumb-club__tag-icon { display: block; }
+  }
+
+  .crumb-club__short { display: none; }
+
+  @media (max-width: 749px) {
+    .crumb-club__long { display: none; }
+    .crumb-club__short { display: inline; }
+  }
+
+  .crumb-club__heading {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: clamp(1.5rem, 1.1rem + 2vw, 3rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--crumb-ink);
+  }
+
+  .crumb-club__text {
+    margin: 0;
+    max-inline-size: 36rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--crumb-ink);
+  }
+
+  .crumb-club__form {
+    inline-size: 100%;
+    max-inline-size: 28rem;
+    padding-block-start: 0.25rem;
+  }
+
+  .crumb-club__privacy {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    /* 7.3:1 on the desktop yellow, 5.4:1 on the mobile yellow at default colors */
+    color: var(--crumb-ink-muted);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb newsletter",
+  "tag": "section",
+  "class": "crumb-newsletter-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "tag_long",
+      "label": "Tag (desktop)",
+      "info": "Only promise what you can deliver. Words like \"instant\" are a promise.",
+      "default": "Instant $5 off first box"
+    },
+    {
+      "type": "text",
+      "id": "tag_short",
+      "label": "Tag (mobile)",
+      "info": "Leave blank to use the desktop tag on mobile.",
+      "default": "VIP Snack Pass"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Join The Crumb Club"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "Get secret flavor previews, early access to limited seasonal recipe drops, and $5 off your very first custom snack bundle!"
+    },
+    {
+      "type": "text",
+      "id": "privacy",
+      "label": "Privacy line",
+      "default": "We respect your inbox. No spam, only crunch. Unsubscribe anytime."
+    },
+    {
+      "type": "header",
+      "content": "Form"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Email placeholder",
+      "info": "Leave blank for no placeholder. The field always has a screen-reader label.",
+      "default": "you@example.com"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label (desktop)",
+      "info": "Leave blank to use the default \"Sign up\".",
+      "default": "Claim $5 Off"
+    },
+    {
+      "type": "text",
+      "id": "button_label_short",
+      "label": "Button label (mobile)",
+      "info": "Leave blank to use the desktop label."
+    },
+    {
+      "type": "textarea",
+      "id": "success_message",
+      "label": "Success message",
+      "info": "Shown after signup. If you give a discount code here, anyone who sees it can use it. Leave blank for the theme default.",
+      "default": "You're in the Club! Use code CRUMB5 at checkout for $5 off your first box."
+    },
+    {
+      "type": "text",
+      "id": "error_message",
+      "label": "Error message",
+      "info": "Leave blank to show Shopify's own error text."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb newsletter"
+    }
+  ]
+}
+{% endschema %}
