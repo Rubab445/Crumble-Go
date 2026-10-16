@@ -219,7 +219,7 @@
         "padding_bottom": 48
       }
     },
-    "crumb_bundles_ETzEkV": {
+    "crumb_bundles_wHQ8mU": {
       "type": "crumb-bundles",
       "name": "Crumb bundles",
       "settings": {
@@ -239,7 +239,7 @@
         "padding_bottom": 48
       }
     },
-    "crumb_favorites_dLXUV9": {
+    "crumb_favorites_qAh37V": {
       "type": "crumb-favorites",
       "name": "Crumb favorites",
       "settings": {
@@ -253,8 +253,64 @@
         "button_label": "Add",
         "options_label": "Choose options",
         "sold_out_label": "Sold out",
-        "build_page": "shopify://pages/build-a-box",
+        "build_page": "",
         "description_length": 90,
+        "padding_top": 48,
+        "padding_bottom": 48
+      }
+    },
+    "crumb_testimonials_GxbrTK": {
+      "type": "crumb-testimonials",
+      "blocks": {
+        "testimonial_9k8MEN": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "quote_title": "Pick 6. Regret nothing! The truffle almonds are completely insane.",
+            "quote_body": "I built a 6-pack for my WFH desk. The bags didn’t even survive Wednesday. Absolutely unputdownable quality and zero greasy residue.",
+            "name": "Maya Lin",
+            "role": "Verified 6-Pack Builder",
+            "verified_long": "Verified 6-Pack Builder",
+            "verified_short": "Verified Buyer"
+          }
+        },
+        "testimonial_Y6wCaT": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "quote_title": "Sent the 9-pack Feast as a client gift. They wouldn’t stop raving.",
+            "quote_body": "The unboxing experience with the stickers, custom note, and vibrant packets feels like Christmas. Way better than generic corporate fruit baskets.",
+            "name": "Devon Keller",
+            "role": "Design Director, Austin",
+            "verified_long": "",
+            "verified_short": ""
+          }
+        },
+        "testimonial_EGbKqg": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 4,
+            "quote_title": "Finally, clean snacking that doesn’t taste like cardboard.",
+            "quote_body": "My kids adore the Berry Crunch and I hide the dark chocolate clusters in my top drawer. It feels so reassuring reading short ingredient lists.",
+            "name": "Sarah N.",
+            "role": "Monthly Snack Crafter",
+            "verified_long": "Monthly Snack Crafter",
+            "verified_short": ""
+          }
+        }
+      },
+      "block_order": [
+        "testimonial_9k8MEN",
+        "testimonial_Y6wCaT",
+        "testimonial_EGbKqg"
+      ],
+      "name": "Crumb testimonials",
+      "settings": {
+        "tag_long": "True Crumb Lovers",
+        "tag_short": "True Crumb Lovers",
+        "heading_long": "Snackers Love Crumb & Co.",
+        "heading_short": "Snackers Rave About Us",
+        "stats": "Based on 14,000+ custom bundles packed",
         "padding_top": 48,
         "padding_bottom": 48
       }
@@ -263,7 +319,8 @@
   "order": [
     "crumb_hero",
     "crumb_steps_D6hnGf",
-    "crumb_bundles_ETzEkV",
-    "crumb_favorites_dLXUV9"
+    "crumb_bundles_wHQ8mU",
+    "crumb_favorites_qAh37V",
+    "crumb_testimonials_GxbrTK"
   ]
 }
