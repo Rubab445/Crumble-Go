@@ -4,8 +4,12 @@
   - Header: tag chip + h2 heading (left), optional stats line (right on desktop).
     Tag, heading and stats each hide when blank.
   - Cards: one block per testimonial (max 6). Every field is optional and hides its own element.
-  - Mobile shows the first 2 blocks only. Tablet (750-989px) uses 2 columns
-    and an odd last card spans the full width.
+  - 1-3 blocks: grid. Mobile shows the first 2 blocks only; tablet (750-989px)
+    uses 2 columns with an odd last card spanning full width.
+  - 4+ blocks: swipeable carousel (all cards on every screen size) with prev/next/pause
+    buttons and optional autoplay. Autoplay pauses on hover, keyboard focus, touch,
+    when off-screen or in a background tab, and never runs with reduced motion
+    or in the theme editor.
   - Avatar initials are calculated from the name. An optional photo replaces them.
   - Stars are decorative (aria-hidden); a screen-reader-only "Rated X out of 5" carries the meaning.
   - No blocks: nothing on the storefront, a hint in the theme editor.
@@ -34,10 +38,15 @@
     if heading_long == blank
       assign heading_long = heading_short
     endif
+
+    assign is_carousel = false
+    if section.blocks.size > 3
+      assign is_carousel = true
+    endif
   -%}
 
   <section
-    class="crumb-testimonials"
+    class="crumb-testimonials{% if is_carousel %} crumb-testimonials--carousel{% endif %}"
     {% if heading_long != blank %}aria-labelledby="crumb-testimonials-heading-{{ section.id }}"{% endif %}
     style="
       --ct-padding-top: {{ section.settings.padding_top }}px;
@@ -78,7 +87,22 @@
         </header>
       {%- endif -%}
 
-      <ul class="crumb-testimonials__list" role="list">
+      {%- if is_carousel -%}
+        <crumb-testimonials-carousel
+          class="crumb-testimonials__carousel"
+          data-autoplay="{{ section.settings.autoplay }}"
+          data-interval="{{ section.settings.autoplay_seconds }}"
+        >
+        <div
+          class="crumb-testimonials__viewport"
+          data-viewport
+          role="region"
+          aria-label="Customer testimonials"
+          tabindex="0"
+        >
+      {%- endif -%}
+
+      <ul class="crumb-testimonials__list" role="list" {% if is_carousel %}data-list{% endif %}>
         {%- for block in section.blocks -%}
           {%- liquid
             assign rating = block.settings.rating | default: 5 | plus: 0
@@ -222,6 +246,44 @@
           </li>
         {%- endfor -%}
       </ul>
+
+      {%- if is_carousel -%}
+        </div>
+
+        <div class="crumb-testimonials__controls">
+          <button type="button" class="crumb-testimonials__control" data-prev aria-label="Previous testimonials">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path d="M15 5l-7 7 7 7"/>
+            </svg>
+          </button>
+
+          {%- if section.settings.autoplay -%}
+            <button
+              type="button"
+              class="crumb-testimonials__control crumb-testimonials__control--toggle"
+              data-toggle
+              data-playing="true"
+              data-label-pause="Pause auto-scroll"
+              data-label-play="Play auto-scroll"
+              aria-label="Pause auto-scroll"
+            >
+              <svg class="crumb-testimonials__icon-pause" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>
+              </svg>
+              <svg class="crumb-testimonials__icon-play" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          {%- endif -%}
+
+          <button type="button" class="crumb-testimonials__control" data-next aria-label="Next testimonials">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        </crumb-testimonials-carousel>
+      {%- endif -%}
     </div>
   </section>
 {%- endif -%}
@@ -330,7 +392,7 @@
     }
   }
 
-  /* Grid: 1 col on mobile, 2 on tablet, 3 on desktop */
+  /* Grid (1-3 blocks): 1 col on mobile, 2 on tablet, 3 on desktop */
   .crumb-testimonials__list {
     display: grid;
     grid-template-columns: 1fr;
@@ -345,9 +407,11 @@
     min-width: 0;
   }
 
-  /* Mobile design shows the first 2 blocks only */
+  /* Mobile design shows the first 2 blocks only (grid mode; the carousel shows all) */
   @media (max-width: 749px) {
-    .crumb-testimonials__item:nth-child(n + 3) { display: none; }
+    .crumb-testimonials:not(.crumb-testimonials--carousel) .crumb-testimonials__item:nth-child(n + 3) {
+      display: none;
+    }
   }
 
   @media (min-width: 750px) {
@@ -362,6 +426,99 @@
   @media (min-width: 990px) {
     .crumb-testimonials__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .crumb-testimonials__item:last-child:nth-child(odd) { grid-column: auto; }
+  }
+
+  /* Carousel (4+ blocks) */
+  .crumb-testimonials__carousel { display: block; }
+
+  /* Padding leaves room for the hard card shadow so the scroll box never clips it */
+  .crumb-testimonials__viewport {
+    padding: 0.25rem 0.5rem 0.75rem 0.25rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .crumb-testimonials__viewport::-webkit-scrollbar { display: none; }
+
+  .crumb-testimonials__viewport:focus-visible {
+    outline: 2px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-testimonials--carousel .crumb-testimonials__list {
+    --ct-gap: 1rem;
+    display: flex;
+    gap: var(--ct-gap);
+  }
+
+  .crumb-testimonials--carousel .crumb-testimonials__item {
+    flex: 0 0 85%;
+    scroll-snap-align: start;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials--carousel .crumb-testimonials__list { --ct-gap: 1.5rem; }
+    .crumb-testimonials--carousel .crumb-testimonials__item {
+      flex-basis: calc((100% - var(--ct-gap)) / 2);
+    }
+  }
+
+  @media (min-width: 990px) {
+    .crumb-testimonials--carousel .crumb-testimonials__item {
+      flex-basis: calc((100% - 2 * var(--ct-gap)) / 3);
+    }
+  }
+
+  .crumb-testimonials__controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-block-start: 1rem;
+  }
+
+  .crumb-testimonials__control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    color: var(--ct-ink);
+    background: var(--ct-card);
+    border: var(--ct-border);
+    border-radius: var(--crumb-radius-full);
+    box-shadow: var(--crumb-shadow-sm);
+    cursor: pointer;
+    transition: background-color var(--crumb-transition);
+  }
+
+  .crumb-testimonials__control:hover { background: var(--ct-tag-bg); }
+
+  .crumb-testimonials__control:focus-visible {
+    outline: 2px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-testimonials__control svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .crumb-testimonials__control--toggle svg {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .crumb-testimonials__control--toggle[data-playing="true"] .crumb-testimonials__icon-play,
+  .crumb-testimonials__control--toggle[data-playing="false"] .crumb-testimonials__icon-pause {
+    display: none;
   }
 
   /* Card */
@@ -544,6 +701,147 @@
   }
 {% endstylesheet %}
 
+{% javascript %}
+  if (!customElements.get('crumb-testimonials-carousel')) {
+    class CrumbTestimonialsCarousel extends HTMLElement {
+      connectedCallback() {
+        this.viewport = this.querySelector('[data-viewport]');
+        this.list = this.querySelector('[data-list]');
+        this.prevButton = this.querySelector('[data-prev]');
+        this.nextButton = this.querySelector('[data-next]');
+        this.toggleButton = this.querySelector('[data-toggle]');
+        if (!this.viewport || !this.list) return;
+
+        this.delay = (Number(this.dataset.interval) || 5) * 1000;
+        this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this.inDesignMode = Boolean(window.Shopify && window.Shopify.designMode);
+
+        this.timer = null;
+        this.userPaused = false;
+        this.hovering = false;
+        this.focused = false;
+        this.touching = false;
+        this.visible = false;
+        this.touchTimer = null;
+
+        this.abort = new AbortController();
+        const { signal } = this.abort;
+
+        if (this.prevButton) this.prevButton.addEventListener('click', () => this.move(-1), { signal });
+        if (this.nextButton) this.nextButton.addEventListener('click', () => this.move(1), { signal });
+
+        if (this.toggleButton) {
+          if (!this.canAutoplay) this.toggleButton.hidden = true;
+          this.toggleButton.addEventListener('click', () => this.togglePlayback(), { signal });
+        }
+
+        this.addEventListener('pointerenter', (event) => {
+          if (event.pointerType === 'mouse') { this.hovering = true; this.update(); }
+        }, { signal });
+        this.addEventListener('pointerleave', (event) => {
+          if (event.pointerType === 'mouse') { this.hovering = false; this.update(); }
+        }, { signal });
+
+        // Only keyboard focus pauses; a mouse click on a button must not leave autoplay stuck
+        this.addEventListener('focusin', (event) => {
+          if (event.target.matches(':focus-visible')) { this.focused = true; this.update(); }
+        }, { signal });
+        this.addEventListener('focusout', () => { this.focused = false; this.update(); }, { signal });
+
+        this.addEventListener('touchstart', () => {
+          clearTimeout(this.touchTimer);
+          this.touching = true;
+          this.update();
+        }, { passive: true, signal });
+        const endTouch = () => {
+          clearTimeout(this.touchTimer);
+          this.touchTimer = setTimeout(() => { this.touching = false; this.update(); }, 3000);
+        };
+        this.addEventListener('touchend', endTouch, { passive: true, signal });
+        this.addEventListener('touchcancel', endTouch, { passive: true, signal });
+
+        document.addEventListener('visibilitychange', () => this.update(), { signal });
+        this.motionQuery.addEventListener('change', () => this.update(), { signal });
+
+        // Theme editor: bring the selected block into view
+        this.addEventListener('shopify:block:select', (event) => {
+          event.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }, { signal });
+
+        this.observer = new IntersectionObserver(([entry]) => {
+          this.visible = entry.isIntersecting;
+          this.update();
+        }, { threshold: 0.25 });
+        this.observer.observe(this);
+      }
+
+      disconnectedCallback() {
+        if (this.abort) this.abort.abort();
+        if (this.observer) this.observer.disconnect();
+        clearInterval(this.timer);
+        clearTimeout(this.touchTimer);
+        this.timer = null;
+      }
+
+      get canAutoplay() {
+        return this.dataset.autoplay === 'true' && !this.motionQuery.matches && !this.inDesignMode;
+      }
+
+      move(direction) {
+        const first = this.list.firstElementChild;
+        if (!first) return;
+
+        const gap = parseFloat(getComputedStyle(this.list).columnGap) || 0;
+        const step = first.getBoundingClientRect().width + gap;
+        const max = this.viewport.scrollWidth - this.viewport.clientWidth;
+        const current = this.viewport.scrollLeft;
+
+        let target = current + direction * step;
+        if (direction > 0 && current >= max - 2) target = 0;
+        if (direction < 0 && current <= 2) target = max;
+
+        this.viewport.scrollTo({
+          left: target,
+          behavior: this.motionQuery.matches ? 'auto' : 'smooth',
+        });
+      }
+
+      togglePlayback() {
+        this.userPaused = !this.userPaused;
+        if (this.toggleButton) {
+          const playing = !this.userPaused;
+          this.toggleButton.dataset.playing = String(playing);
+          this.toggleButton.setAttribute(
+            'aria-label',
+            playing ? this.toggleButton.dataset.labelPause : this.toggleButton.dataset.labelPlay
+          );
+        }
+        this.update();
+      }
+
+      update() {
+        const shouldRun =
+          this.canAutoplay &&
+          !this.userPaused &&
+          !this.hovering &&
+          !this.focused &&
+          !this.touching &&
+          this.visible &&
+          !document.hidden;
+
+        if (shouldRun && !this.timer) {
+          this.timer = setInterval(() => this.move(1), this.delay);
+        } else if (!shouldRun && this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+      }
+    }
+
+    customElements.define('crumb-testimonials-carousel', CrumbTestimonialsCarousel);
+  }
+{% endjavascript %}
+
 {% schema %}
 {
   "name": "Crumb testimonials",
@@ -586,6 +884,27 @@
       "id": "stats",
       "label": "Stats line (desktop only)",
       "info": "Only enter figures you can back up. Leave blank to hide."
+    },
+    {
+      "type": "header",
+      "content": "Carousel (4 or more testimonials)"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Auto-scroll",
+      "info": "Pauses on hover, keyboard focus and touch. Off for visitors who prefer reduced motion. Does not run in the theme editor.",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_seconds",
+      "label": "Seconds between moves",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "default": 5
     },
     {
       "type": "header",
