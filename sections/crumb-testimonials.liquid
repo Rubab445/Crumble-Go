@@ -1,0 +1,714 @@
+{%- comment -%}
+  crumb-testimonials: "Snackers Love Crumb & Co."
+
+  - Header: tag chip + h2 heading (left), optional stats line (right on desktop).
+    Tag, heading and stats each hide when blank.
+  - Cards: one block per testimonial (max 6). Every field is optional and hides its own element.
+  - Mobile shows the first 2 blocks only. Tablet (750-989px) uses 2 columns
+    and an odd last card spans the full width.
+  - Avatar initials are calculated from the name. An optional photo replaces them.
+  - Stars are decorative (aria-hidden); a screen-reader-only "Rated X out of 5" carries the meaning.
+  - No blocks: nothing on the storefront, a hint in the theme editor.
+  - Colors, borders, radius, shadows and fonts all come from --crumb-* tokens.
+{%- endcomment -%}
+
+{%- if section.blocks.size == 0 -%}
+  {%- if request.design_mode -%}
+    <div class="crumb-testimonials crumb-testimonials--empty">
+      <p class="crumb-testimonials__hint">
+        Crumb testimonials: add up to 6 testimonial blocks. This section is hidden on the storefront until you do.
+      </p>
+    </div>
+  {%- endif -%}
+{%- else -%}
+  {%- liquid
+    assign tag_long = section.settings.tag_long | strip
+    assign tag_short = section.settings.tag_short | strip
+    assign heading_long = section.settings.heading_long | strip
+    assign heading_short = section.settings.heading_short | strip
+    assign stats = section.settings.stats | strip
+
+    if tag_long == blank
+      assign tag_long = tag_short
+    endif
+    if heading_long == blank
+      assign heading_long = heading_short
+    endif
+  -%}
+
+  <section
+    class="crumb-testimonials"
+    {% if heading_long != blank %}aria-labelledby="crumb-testimonials-heading-{{ section.id }}"{% endif %}
+    style="
+      --ct-padding-top: {{ section.settings.padding_top }}px;
+      --ct-padding-bottom: {{ section.settings.padding_bottom }}px;
+    "
+  >
+    <div class="crumb-testimonials__inner">
+
+      {%- if tag_long != blank or heading_long != blank or stats != blank -%}
+        <header class="crumb-testimonials__header">
+          <div class="crumb-testimonials__heading-group">
+            {%- if tag_long != blank -%}
+              <p class="crumb-testimonials__tag">
+                {%- if tag_short != blank and tag_short != tag_long -%}
+                  <span class="crumb-testimonials__long">{{ tag_long | escape }}</span>
+                  <span class="crumb-testimonials__short">{{ tag_short | escape }}</span>
+                {%- else -%}
+                  {{ tag_long | escape }}
+                {%- endif -%}
+              </p>
+            {%- endif -%}
+
+            {%- if heading_long != blank -%}
+              <h2 class="crumb-testimonials__heading" id="crumb-testimonials-heading-{{ section.id }}">
+                {%- if heading_short != blank and heading_short != heading_long -%}
+                  <span class="crumb-testimonials__long">{{ heading_long | escape }}</span>
+                  <span class="crumb-testimonials__short">{{ heading_short | escape }}</span>
+                {%- else -%}
+                  {{ heading_long | escape }}
+                {%- endif -%}
+              </h2>
+            {%- endif -%}
+          </div>
+
+          {%- if stats != blank -%}
+            <p class="crumb-testimonials__stats">{{ stats | escape }}</p>
+          {%- endif -%}
+        </header>
+      {%- endif -%}
+
+      <ul class="crumb-testimonials__list" role="list">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign rating = block.settings.rating | default: 5 | plus: 0
+            assign name = block.settings.name | strip
+            assign role = block.settings.role | strip
+            assign quote_title = block.settings.quote_title | strip
+            assign quote_body = block.settings.quote_body | strip
+            assign v_long = block.settings.verified_long | strip
+            assign v_short = block.settings.verified_short | strip
+
+            if v_long == blank
+              assign v_long = v_short
+            endif
+            if v_short == blank
+              assign v_short = v_long
+            endif
+
+            assign tint = forloop.index0 | modulo: 4
+
+            # Initials: first letter of first word + first letter of last word.
+            # Skips blank words from extra spaces; slice works on characters, not bytes.
+            assign initials = ''
+            assign word_count = 0
+            assign first_word = ''
+            assign last_word = ''
+            assign name_words = name | split: ' '
+
+            for word in name_words
+              assign word = word | strip
+              if word != blank
+                assign word_count = word_count | plus: 1
+                if word_count == 1
+                  assign first_word = word
+                endif
+                assign last_word = word
+              endif
+            endfor
+
+            if word_count > 0
+              assign initials = first_word | slice: 0 | upcase
+            endif
+            if word_count > 1
+              assign last_initial = last_word | slice: 0 | upcase
+              assign initials = initials | append: last_initial
+            endif
+
+            assign has_avatar = false
+            if block.settings.avatar != blank or initials != blank
+              assign has_avatar = true
+            endif
+
+            assign has_caption = false
+            if name != blank or role != blank or v_long != blank or has_avatar
+              assign has_caption = true
+            endif
+          -%}
+
+          <li class="crumb-testimonials__item" {{ block.shopify_attributes }}>
+            <figure class="crumb-testimonials__card">
+
+              <div class="crumb-testimonials__top">
+                <div class="crumb-testimonials__stars">
+                  <span class="crumb-testimonials__sr">Rated {{ rating }} out of 5</span>
+                  {%- for i in (1..5) -%}
+                    <svg
+                      class="crumb-testimonials__star {% if i <= rating %}crumb-testimonials__star--on{% else %}crumb-testimonials__star--off{% endif %}"
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/>
+                    </svg>
+                  {%- endfor -%}
+                </div>
+
+                {%- if v_short != blank -%}
+                  <span class="crumb-testimonials__verified-short">{{ v_short | escape }}</span>
+                {%- endif -%}
+              </div>
+
+              {%- if quote_title != blank or quote_body != blank -%}
+                <blockquote class="crumb-testimonials__quote">
+                  {%- if quote_title != blank -%}
+                    <p class="crumb-testimonials__quote-title">{{ quote_title | escape }}</p>
+                  {%- endif -%}
+                  {%- if quote_body != blank -%}
+                    {%- comment -%} escape FIRST, then newline_to_br, or the <br> tags become visible text. {%- endcomment -%}
+                    <p class="crumb-testimonials__quote-body">{{ quote_body | escape | newline_to_br }}</p>
+                  {%- endif -%}
+                </blockquote>
+              {%- endif -%}
+
+              {%- if has_caption -%}
+                <figcaption class="crumb-testimonials__author">
+                  {%- if has_avatar -%}
+                    <span class="crumb-testimonials__avatar crumb-testimonials__avatar--tint-{{ tint }}" aria-hidden="true">
+                      {%- if block.settings.avatar != blank -%}
+                        {{
+                          block.settings.avatar
+                          | image_url: width: 160
+                          | image_tag:
+                            width: 80,
+                            height: 80,
+                            alt: '',
+                            loading: 'lazy',
+                            class: 'crumb-testimonials__avatar-img'
+                        }}
+                      {%- else -%}
+                        {{ initials | escape }}
+                      {%- endif -%}
+                    </span>
+                  {%- endif -%}
+
+                  <span class="crumb-testimonials__author-text">
+                    {%- if name != blank or role != blank -%}
+                      <span class="crumb-testimonials__name-line">
+                        {%- if name != blank -%}
+                          <span class="crumb-testimonials__name">{{ name | escape }}</span>
+                        {%- endif -%}
+                        {%- if role != blank -%}
+                          <span class="crumb-testimonials__role">{{ role | escape }}</span>
+                        {%- endif -%}
+                      </span>
+                    {%- endif -%}
+
+                    {%- if v_long != blank -%}
+                      <span class="crumb-testimonials__verified-long">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                          <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.2 14.4L6.6 12.2l1.4-1.4 2.8 2.8 5.2-5.2 1.4 1.4z"/>
+                        </svg>
+                        {{ v_long | escape }}
+                      </span>
+                    {%- endif -%}
+                  </span>
+                </figcaption>
+              {%- endif -%}
+
+            </figure>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  </section>
+{%- endif -%}
+
+{% stylesheet %}
+  .crumb-testimonials {
+    --ct-ink: var(--crumb-ink);
+    --ct-muted: var(--crumb-ink-muted);
+    --ct-card: var(--crumb-surface-lowest);
+    --ct-line: var(--crumb-surface-container);
+    --ct-star: var(--crumb-mustard);
+    --ct-star-off: var(--crumb-ink-muted);
+    --ct-verified: var(--crumb-primary);
+    --ct-tag-bg: var(--crumb-mustard-soft);
+    --ct-tag-ink: var(--crumb-on-mustard-soft);
+
+    --ct-tint-0-bg: var(--crumb-mustard-soft);
+    --ct-tint-0-ink: var(--crumb-on-mustard-soft);
+    --ct-tint-1-bg: var(--crumb-coral);
+    --ct-tint-1-ink: var(--crumb-on-coral);
+    --ct-tint-2-bg: var(--crumb-mint);
+    --ct-tint-2-ink: var(--crumb-on-mint);
+    --ct-tint-3-bg: var(--crumb-mustard);
+    --ct-tint-3-ink: var(--crumb-on-mustard);
+
+    --ct-border: var(--crumb-border);
+    --ct-radius: var(--crumb-radius-lg);
+    --ct-font-heading: var(--crumb-font-display);
+
+    padding-block: var(--ct-padding-top, 0) var(--ct-padding-bottom, 0);
+    font-family: var(--crumb-font-body);
+    color: var(--ct-ink);
+  }
+
+  .crumb-testimonials__hint {
+    margin: 0;
+    padding: 1rem;
+    text-align: center;
+    border: 2px dashed var(--crumb-ink);
+  }
+
+  /* Gutter is wider than the 4px shadow, so shadows never clip.
+     Do not add overflow: hidden to this section or the list. */
+  .crumb-testimonials__inner {
+    max-inline-size: var(--crumb-container, 80rem);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter, 1rem);
+  }
+
+  /* Header */
+  .crumb-testimonials__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block-end: 1.5rem;
+  }
+
+  .crumb-testimonials__tag {
+    display: inline-flex;
+    margin: 0 0 0.5rem;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ct-tag-ink);
+    background: var(--ct-tag-bg);
+    border: var(--ct-border);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-sm);
+    transform: rotate(-1deg);
+  }
+
+  .crumb-testimonials__heading {
+    margin: 0;
+    font-family: var(--ct-font-heading);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .crumb-testimonials__stats {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ct-muted);
+  }
+
+  /* Long / short labels */
+  .crumb-testimonials__short { display: none; }
+
+  @media (max-width: 749px) {
+    .crumb-testimonials__long { display: none; }
+    .crumb-testimonials__short { display: inline; }
+    /* The mobile design has no stats row. */
+    .crumb-testimonials__stats { display: none; }
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-block-end: 2rem;
+    }
+  }
+
+  /* Grid: 1 col on mobile, 2 on tablet, 3 on desktop */
+  .crumb-testimonials__list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-testimonials__item {
+    display: flex;
+    min-width: 0;
+  }
+
+  /* Mobile design shows the first 2 blocks only */
+  @media (max-width: 749px) {
+    .crumb-testimonials__item:nth-child(n + 3) { display: none; }
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+    /* Odd last card spans full width instead of leaving a gap */
+    .crumb-testimonials__item:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  }
+
+  @media (min-width: 990px) {
+    .crumb-testimonials__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .crumb-testimonials__item:last-child:nth-child(odd) { grid-column: auto; }
+  }
+
+  /* Card */
+  .crumb-testimonials__card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    margin: 0;
+    padding: 1rem;
+    background: var(--ct-card);
+    border: var(--ct-border);
+    border-radius: var(--ct-radius);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__card {
+      gap: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: var(--crumb-shadow-md);
+    }
+  }
+
+  .crumb-testimonials__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .crumb-testimonials__stars {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .crumb-testimonials__star { flex-shrink: 0; }
+  .crumb-testimonials__star--on { fill: var(--ct-star); stroke: var(--ct-ink); stroke-width: 1; }
+  .crumb-testimonials__star--off { fill: none; stroke: var(--ct-star-off); stroke-width: 1.5; }
+
+  .crumb-testimonials__sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .crumb-testimonials__verified-short {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ct-muted);
+    text-align: end;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__verified-short { display: none; }
+  }
+
+  /* Quote */
+  .crumb-testimonials__quote { margin: 0; }
+
+  .crumb-testimonials__quote-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .crumb-testimonials__quote-title::before { content: "\201C"; }
+  .crumb-testimonials__quote-title::after { content: "\201D"; }
+
+  .crumb-testimonials__quote-body {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--ct-muted);
+    overflow-wrap: anywhere;
+  }
+
+  /* Author row: pinned to the bottom so cards stay equal height without clamping */
+  .crumb-testimonials__author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-start: auto;
+    padding-block-start: 0.5rem;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__author {
+      gap: 0.75rem;
+      padding-block-start: 1rem;
+      border-block-start: 2px solid var(--ct-line);
+    }
+  }
+
+  .crumb-testimonials__avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    overflow: hidden;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    border-radius: 50%;
+  }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__avatar {
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
+      font-size: 0.875rem;
+      border: var(--ct-border);
+    }
+  }
+
+  .crumb-testimonials__avatar-img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .crumb-testimonials__avatar--tint-0 { background: var(--ct-tint-0-bg); color: var(--ct-tint-0-ink); }
+  .crumb-testimonials__avatar--tint-1 { background: var(--ct-tint-1-bg); color: var(--ct-tint-1-ink); }
+  .crumb-testimonials__avatar--tint-2 { background: var(--ct-tint-2-bg); color: var(--ct-tint-2-ink); }
+  .crumb-testimonials__avatar--tint-3 { background: var(--ct-tint-3-bg); color: var(--ct-tint-3-ink); }
+
+  .crumb-testimonials__author-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .crumb-testimonials__name-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .crumb-testimonials__name {
+    font-size: 0.875rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .crumb-testimonials__role {
+    font-size: 0.8125rem;
+    color: var(--ct-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .crumb-testimonials__name + .crumb-testimonials__role::before { content: "\2022\00a0"; }
+
+  /* Small colored text: --ct-verified must meet 4.5:1 on --ct-card */
+  .crumb-testimonials__verified-long {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ct-verified);
+  }
+
+  .crumb-testimonials__verified-long svg { flex-shrink: 0; fill: currentColor; }
+
+  @media (min-width: 750px) {
+    .crumb-testimonials__verified-long { display: inline-flex; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb testimonials",
+  "tag": "section",
+  "class": "crumb-testimonials-section",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "tag_long",
+      "label": "Tag (desktop)",
+      "default": "True Crumb Lovers"
+    },
+    {
+      "type": "text",
+      "id": "tag_short",
+      "label": "Tag (mobile)",
+      "info": "Leave blank to use the desktop tag on mobile.",
+      "default": "Real snacker love"
+    },
+    {
+      "type": "text",
+      "id": "heading_long",
+      "label": "Heading (desktop)",
+      "default": "Snackers Love Crumb & Co."
+    },
+    {
+      "type": "text",
+      "id": "heading_short",
+      "label": "Heading (mobile)",
+      "info": "Leave blank to use the desktop heading on mobile.",
+      "default": "Snackers Rave About Us"
+    },
+    {
+      "type": "text",
+      "id": "stats",
+      "label": "Stats line (desktop only)",
+      "info": "Only enter figures you can back up. Leave blank to hide."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Star rating",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "quote_title",
+          "label": "Quote title"
+        },
+        {
+          "type": "textarea",
+          "id": "quote_body",
+          "label": "Quote"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name"
+        },
+        {
+          "type": "text",
+          "id": "role",
+          "label": "Role or location"
+        },
+        {
+          "type": "image_picker",
+          "id": "avatar",
+          "label": "Photo",
+          "info": "Optional. Initials are used if blank."
+        },
+        {
+          "type": "text",
+          "id": "verified_long",
+          "label": "Verified label (desktop)",
+          "info": "Only use for real, verified customers. Blank hides it."
+        },
+        {
+          "type": "text",
+          "id": "verified_short",
+          "label": "Verified label (mobile)",
+          "info": "Blank falls back to the desktop label."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb testimonials",
+      "settings": {
+        "tag_long": "Sample content",
+        "tag_short": "Sample content",
+        "heading_long": "Snackers Love Crumb & Co.",
+        "heading_short": "Snackers Rave About Us"
+      },
+      "blocks": [
+        {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "quote_title": "Sample review title",
+            "quote_body": "Sample review text. Replace with a real customer testimonial.",
+            "name": "Sample Customer",
+            "role": "Sample"
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "quote_title": "Sample review title",
+            "quote_body": "Sample review text. Replace with a real customer testimonial.",
+            "name": "Sample Customer",
+            "role": "Sample"
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "rating": 4,
+            "quote_title": "Sample review title",
+            "quote_body": "Sample review text. Replace with a real customer testimonial.",
+            "name": "Sample Customer",
+            "role": "Sample"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
