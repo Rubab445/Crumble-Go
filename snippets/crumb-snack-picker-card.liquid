@@ -1,0 +1,586 @@
+{%- doc -%}
+  Crumb snack picker card for the Build-a-Box page.
+  Kept separate from crumb-product-card on purpose: this one has the Add button,
+  the in-box stepper and the data attributes the builder script reads.
+
+  The card is server-rendered. The script only toggles the Add button / stepper,
+  the count and aria-disabled. It never rewrites the markup.
+
+  Optional product metafields (namespace custom): flavor_tag (badge, e.g. "Top Pick"),
+  weight (e.g. "3.5 oz (100g)"), dietary (list of text, e.g. "Vegan").
+
+  @param {product} product - The snack
+  @param {number} [tint] - 0, 1 or 2. Image background tint.
+  @param {string} box_id - Id prefix. The "box is full" hint element is {box_id}-full-hint.
+{%- enddoc -%}
+
+{%- liquid
+  assign mf_ns = 'custom'
+
+  assign tint_index = tint | default: 0
+  assign flavor_tag = product.metafields[mf_ns].flavor_tag.value | strip
+  assign weight_text = product.metafields[mf_ns].weight.value | strip
+  assign dietary_tags = product.metafields[mf_ns].dietary.value
+  assign description = product.description | strip_html | strip | truncate: 110 | escape_once
+
+  # Single-variant snacks use Add / stepper. Snacks with variants open a variant picker.
+  assign pickable = false
+  assign choosable = false
+  if product.available
+    if product.has_only_default_variant
+      assign pickable = true
+    else
+      assign choosable = true
+    endif
+  endif
+-%}
+
+{%- liquid
+  # One handleized token list per card: product tags + dietary metafield values.
+  # The filter bar matches against it (e.g. "sweet", "vegan", "gluten-free").
+  assign filter_tokens = ''
+  for tag in product.tags
+    assign token = tag | handleize
+    assign filter_tokens = filter_tokens | append: ' ' | append: token
+  endfor
+  for diet_tag in dietary_tags
+    assign token = diet_tag | handleize
+    assign filter_tokens = filter_tokens | append: ' ' | append: token
+  endfor
+  assign filter_tokens = filter_tokens | strip
+-%}
+
+<li
+  class="crumb-pick crumb-pick--tint-{{ tint_index }}"
+  data-snack
+  data-handle="{{ product.handle }}"
+  data-title="{{ product.title | escape }}"
+  data-price-text="{{ product.price | money | escape }}"
+  data-image="{{ product.featured_image | image_url: width: 160 }}"
+  data-available="{{ pickable }}"
+  data-choosable="{{ choosable }}"
+  data-tags="{{ filter_tokens }}"
+  {% if pickable %}
+    data-variant-id="{{ product.variants.first.id }}"
+  {% endif %}
+>
+  <article class="crumb-pick__card">
+    <div class="crumb-pick__media">
+      {%- if product.featured_image != blank -%}
+        {{
+          product.featured_image
+          | image_url: width: 720
+          | image_tag:
+            widths: '360, 540, 720',
+            sizes: '(min-width: 990px) 20vw, (min-width: 750px) 30vw, 45vw',
+            loading: 'lazy',
+            alt: '',
+            class: 'crumb-pick__img'
+        }}
+      {%- endif -%}
+      {%- if flavor_tag != blank -%}
+        <span class="crumb-pick__flavor">{{ flavor_tag | escape }}</span>
+      {%- endif -%}
+      {%- if weight_text != blank -%}
+        <span class="crumb-pick__weight">{{ weight_text | escape }}</span>
+      {%- endif -%}
+    </div>
+
+    <div class="crumb-pick__body">
+      <div class="crumb-pick__head">
+        <h3 class="crumb-pick__title">{{ product.title | escape }}</h3>
+        <span class="crumb-pick__price crumb-pick__price--head">{{ product.price | money }}</span>
+      </div>
+
+      {%- if description != blank -%}
+        <p class="crumb-pick__description">{{ description }}</p>
+      {%- endif -%}
+
+      {%- if dietary_tags != blank -%}
+        <ul class="crumb-pick__diet" role="list">
+          {%- for tag in dietary_tags limit: 4 -%}
+            <li class="crumb-pick__diet-tag">{{ tag | escape }}</li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+
+    <div class="crumb-pick__footer">
+      <span class="crumb-pick__price crumb-pick__price--foot">{{ product.price | money }}</span>
+
+      {%- if pickable -%}
+        <div class="crumb-pick__control">
+          <button
+            type="button"
+            class="crumb-pick__add"
+            data-add
+            aria-describedby="{{ box_id }}-full-hint"
+            aria-label="{{ 'crumb.snack_card.add_to_box' | t: title: product.title }}"
+          >
+            <svg
+              class="crumb-pick__icon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            {{ 'crumb.snack_card.add' | t }}
+          </button>
+
+          <div class="crumb-pick__stepper" data-stepper hidden>
+            <button
+              type="button"
+              class="crumb-pick__step crumb-pick__step--minus"
+              data-decrease
+              aria-label="{{ 'crumb.snack_card.remove_one' | t: title: product.title }}"
+            >
+              <svg
+                class="crumb-pick__icon"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M5 12h14"/>
+              </svg>
+            </button>
+            <span class="crumb-pick__count" data-count></span>
+            <button
+              type="button"
+              class="crumb-pick__step crumb-pick__step--plus"
+              data-increase
+              aria-describedby="{{ box_id }}-full-hint"
+              aria-label="{{ 'crumb.snack_card.add_one' | t: title: product.title }}"
+            >
+              <svg
+                class="crumb-pick__icon"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      {%- elsif choosable -%}
+        <div class="crumb-pick__control">
+          <button
+            type="button"
+            class="crumb-pick__add"
+            data-choose
+            aria-describedby="{{ box_id }}-full-hint"
+            aria-label="{{ 'crumb.snack_card.choose_options_named' | t: title: product.title }}"
+          >
+            {{ 'crumb.snack_card.choose_options' | t }}
+          </button>
+          <p class="crumb-pick__in-box" data-choose-count hidden></p>
+        </div>
+
+        <script type="application/json" data-variants>
+          [
+            {%- for variant in product.variants limit: 40 -%}
+              {%- assign variant_image = variant.featured_image | default: product.featured_image -%}
+              {
+                "id": {{ variant.id }},
+                "title": {{ variant.title | json }},
+                "price": {{ variant.price | money | json }},
+                "available": {{ variant.available | json }},
+                "image": {% if variant_image != blank %}{{ variant_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+              }{% unless forloop.last %},{% endunless %}
+            {%- endfor -%}
+          ]
+        </script>
+      {%- else -%}
+        <div class="crumb-pick__control">
+          <button type="button" class="crumb-pick__add" disabled>
+            {{ 'crumb.snack_card.sold_out' | t }}
+            <span class="crumb-pick__sr"> – {{ product.title | escape }}</span>
+          </button>
+        </div>
+      {%- endif -%}
+    </div>
+  </article>
+</li>
+
+{% stylesheet %}
+  .crumb-pick {
+    display: flex;
+    min-width: 0;
+  }
+  .crumb-pick [hidden] {
+    display: none !important;
+  }
+
+  /* ---------- Card: mobile first (2 columns, padded card, image inside) ---------- */
+  .crumb-pick__card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0.625rem;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-pick__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    margin-block: 1.125rem 0.5rem;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--crumb-mustard) 16%, var(--crumb-surface-lowest));
+    border-radius: var(--crumb-radius-md);
+  }
+
+  .crumb-pick--tint-1 .crumb-pick__media {
+    background: color-mix(in srgb, var(--crumb-mint) 14%, var(--crumb-surface-lowest));
+  }
+
+  .crumb-pick--tint-2 .crumb-pick__media {
+    background: color-mix(in srgb, var(--crumb-coral) 14%, var(--crumb-surface-lowest));
+  }
+
+  .crumb-pick__img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .crumb-pick__flavor {
+    position: absolute;
+    inset-block-start: 0.375rem;
+    inset-inline-start: 0.375rem;
+    z-index: 1;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.625rem;
+    font-weight: 800;
+    color: var(--crumb-on-mustard-soft);
+    background: var(--crumb-mustard);
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-xs);
+    transform: rotate(-2deg);
+  }
+
+  .crumb-pick__weight {
+    position: absolute;
+    inset-block-end: 0.375rem;
+    inset-inline-end: 0.375rem;
+    z-index: 1;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--crumb-ink);
+    background: color-mix(in srgb, var(--crumb-surface-lowest) 90%, transparent);
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-sm);
+  }
+
+  .crumb-pick__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .crumb-pick__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+
+  .crumb-pick__title {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .crumb-pick__description {
+    display: -webkit-box;
+    margin: 0.25rem 0 0;
+    overflow: hidden;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    color: var(--crumb-ink-muted);
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Dietary chips: above the title on mobile, under the description on desktop */
+  .crumb-pick__diet {
+    order: -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0 0 0.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-pick__diet-tag {
+    padding: 0 0.25rem;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--crumb-ink-muted);
+    background: var(--crumb-surface-container);
+    border-radius: var(--crumb-radius-sm);
+  }
+
+  .crumb-pick__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-block-start: 0.625rem;
+  }
+
+  .crumb-pick__price {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+  .crumb-pick__price--head {
+    display: none;
+  }
+
+  .crumb-pick__add,
+  .crumb-pick__step {
+    font: inherit;
+    cursor: pointer;
+    color: var(--crumb-ink);
+  }
+
+  .crumb-pick__add {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    text-decoration: none;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-sm);
+    transition: background var(--crumb-transition), box-shadow var(--crumb-transition),
+      transform var(--crumb-transition);
+  }
+
+  .crumb-pick__add:hover {
+    background: var(--crumb-mustard);
+    box-shadow: var(--crumb-shadow-md);
+  }
+  .crumb-pick__add:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  .crumb-pick__add:disabled,
+  .crumb-pick__add[aria-disabled='true'] {
+    cursor: not-allowed;
+    color: var(--crumb-ink-muted);
+    background: var(--crumb-surface-container);
+    box-shadow: var(--crumb-shadow-none);
+    transform: none;
+  }
+
+  .crumb-pick__icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    flex-shrink: 0;
+  }
+
+  /* Stepper: mustard bar on mobile, light bar with a mustard plus on desktop */
+  .crumb-pick__stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-block-size: 2.75rem;
+    padding: 0.125rem 0.25rem;
+    background: var(--crumb-mustard);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-pick__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    padding: 0;
+    background: var(--crumb-surface-lowest);
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-xs);
+  }
+
+  .crumb-pick__step[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .crumb-pick__count {
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: var(--crumb-on-mustard);
+  }
+
+  .crumb-pick__in-box {
+    margin: 0.375rem 0 0;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--crumb-on-mustard-soft);
+    background: var(--crumb-mustard-soft);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-sm);
+  }
+
+  .crumb-pick__add:focus-visible,
+  .crumb-pick__step:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-pick__sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ---------- Desktop (>= 750px): flush image on top, price beside the name ---------- */
+  @media (min-width: 750px) {
+    .crumb-pick__card {
+      justify-content: space-between;
+      padding: 0;
+      overflow: hidden;
+      transition: box-shadow var(--crumb-transition), transform var(--crumb-transition);
+    }
+
+    .crumb-pick__card:hover {
+      box-shadow: var(--crumb-shadow-overlay);
+      transform: translateY(-0.25rem);
+    }
+
+    .crumb-pick__media {
+      aspect-ratio: auto;
+      block-size: 11rem;
+      margin: 0;
+      border-radius: 0;
+      border-block-end: var(--crumb-border);
+    }
+
+    .crumb-pick__img {
+      object-fit: cover;
+      object-position: center 40%;
+    }
+
+    .crumb-pick__flavor {
+      inset-block-start: 0.625rem;
+      inset-inline-start: 0.625rem;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .crumb-pick__weight {
+      inset-block-end: 0.5rem;
+      inset-inline-end: 0.5rem;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .crumb-pick__body {
+      flex: 1 1 auto;
+      padding: 1rem 1rem 0;
+    }
+    .crumb-pick__head {
+      gap: 0.25rem;
+      margin-block-end: 0.25rem;
+    }
+    .crumb-pick__title {
+      font-size: 1.125rem;
+    }
+    .crumb-pick__price--head {
+      display: inline;
+      color: var(--crumb-primary);
+      flex-shrink: 0;
+      font-size: 1.125rem;
+    }
+    .crumb-pick__price--foot {
+      display: none;
+    }
+    .crumb-pick__description {
+      margin: 0 0 0.5rem;
+      font-size: 0.875rem;
+    }
+    .crumb-pick__diet {
+      order: 0;
+      margin: 0 0 1rem;
+    }
+    .crumb-pick__diet-tag {
+      padding: 0.125rem 0.375rem;
+      font-size: 0.625rem;
+      border: 1px solid color-mix(in srgb, var(--crumb-ink) 30%, transparent);
+      background: var(--crumb-surface-low);
+    }
+
+    .crumb-pick__footer {
+      margin: 0;
+      padding: 0 1rem 1rem;
+    }
+
+    .crumb-pick__add {
+      border-radius: var(--crumb-radius-lg);
+      font-size: 0.9375rem;
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    .crumb-pick__stepper {
+      background: var(--crumb-surface-low);
+      padding: 0.25rem;
+    }
+    .crumb-pick__step--plus {
+      background: var(--crumb-mustard);
+    }
+    .crumb-pick__count {
+      font-family: var(--crumb-font-display);
+      font-size: 1rem;
+      color: var(--crumb-ink);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-pick__add,
+    .crumb-pick__card {
+      transition: none;
+    }
+    .crumb-pick__add:active,
+    .crumb-pick__card:hover {
+      transform: none;
+    }
+  }
+{% endstylesheet %}

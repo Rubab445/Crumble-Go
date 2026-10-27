@@ -1,0 +1,2467 @@
+{%- comment -%}
+  crumb-build-box: the Build-a-Box page.
+
+  Data
+  - Box sizes: products in the Bundles collection with a custom.slot_count metafield.
+    Collection order is the display order (sort it cheapest first).
+    Optional: custom.badge_text (ribbon text) and custom.highlight (preselected, red ribbon).
+  - Snacks: products in the Snacks collection. Only available snacks can be added.
+    Snacks with variants open a variant picker.
+  - Prices come from the products. The base value is the average snack price x slots, and the
+    saving % is calculated here in Liquid, so a label can never disagree with the prices.
+    JavaScript only swaps pre-formatted text. It never calculates a charge.
+  - Free dip: shown only when a dip product is chosen. It is added as a second line in the same
+    /cart/add.js call. It is free only if an automatic "Buy X Get Y" discount exists in admin.
+
+  All storefront text comes from locales (crumb.build.*). Merchant-editable copy is in settings.
+{%- endcomment -%}
+
+{%- liquid
+  assign mf_ns = 'custom'
+  assign mf_slots = 'slot_count'
+  assign mf_badge = 'badge_text'
+  assign mf_highlight = 'highlight'
+
+  assign snacks = section.settings.snacks
+  assign bundles = section.settings.bundles
+  assign dip = section.settings.dip_product
+  assign box_id = 'CrumbBuild-' | append: section.id
+
+  assign tag_text = section.settings.tag | strip
+  assign heading_text = section.settings.heading | strip
+  assign heading_accent = section.settings.heading_accent | strip
+  assign intro_text = section.settings.text | strip
+  assign perk_1 = section.settings.perk_1 | strip
+  assign perk_2 = section.settings.perk_2 | strip
+  assign guarantee = section.settings.guarantee | strip
+  assign promise_title = section.settings.promise_title | strip
+  assign promise_text = section.settings.promise_text | strip
+
+  assign dip_ok = false
+  if dip != blank and dip.available
+    assign dip_ok = true
+    assign dip_variant = dip.selected_or_first_available_variant
+  endif
+
+  # Typical snack price (cents): average of the available single-variant snacks.
+  assign unit_total = 0
+  assign unit_count = 0
+  for snack in snacks.products limit: 50
+    if snack.available and snack.has_only_default_variant
+      assign unit_total = unit_total | plus: snack.price
+      assign unit_count = unit_count | plus: 1
+    endif
+  endfor
+  assign unit_cents = 0
+  if unit_count > 0
+    assign unit_cents = unit_total | divided_by: unit_count
+  endif
+
+  assign size_count = 0
+-%}
+
+{%- capture size_items -%}
+  {%- for bundle in bundles.products limit: 6 -%}
+    {%- liquid
+      assign variant = bundle.selected_or_first_available_variant
+      assign slots = bundle.metafields[mf_ns][mf_slots].value | default: 0 | plus: 0
+    -%}
+    {%- if slots > 0 and slots <= 12 -%}
+      {%- liquid
+        assign size_count = size_count | plus: 1
+        assign badge_text = bundle.metafields[mf_ns][mf_badge].value | strip
+        assign is_popular = bundle.metafields[mf_ns][mf_highlight].value | default: false
+        assign base_cents = unit_cents | times: slots
+        assign save_pct = 0
+        if base_cents > variant.price
+          assign save_pct = base_cents | minus: variant.price | times: 100.0 | divided_by: base_cents | round
+        endif
+
+        # Ribbon text: long on desktop ("Popular • 10% off"), short on mobile ("10% off")
+        assign badge_long = ''
+        assign badge_short = ''
+        if bundle.available
+          if badge_text != blank and save_pct > 0
+            assign badge_long = 'crumb.build.size_badge' | t: badge: badge_text, percent: save_pct
+          elsif badge_text != blank
+            assign badge_long = badge_text | escape
+          elsif save_pct > 0
+            assign badge_long = 'crumb.build.size_save_badge' | t: percent: save_pct
+          endif
+
+          if save_pct > 0
+            assign badge_short = 'crumb.build.size_save_badge' | t: percent: save_pct
+          elsif badge_text != blank
+            assign badge_short = badge_text | escape
+          endif
+        endif
+      -%}
+      <label class="crumb-build__size">
+        <input
+          class="crumb-build__size-input"
+          type="radio"
+          name="{{ box_id }}-size"
+          value="{{ bundle.handle }}"
+          data-size-input
+          data-variant-id="{{ variant.id }}"
+          data-slot-count="{{ slots }}"
+          data-title="{{ bundle.title | escape }}"
+          data-price-text="{{ variant.price | money | escape }}"
+          data-base-text="{{ base_cents | money | escape }}"
+          data-save-pct="{{ save_pct }}"
+          data-popular="{{ is_popular }}"
+          {% unless bundle.available %}disabled{% endunless %}
+        >
+        <span class="crumb-build__size-card">
+          {%- if badge_long != blank -%}
+            <span class="crumb-build__size-badge crumb-build__size-badge--long{% if is_popular %} is-popular{% endif %}">{{ badge_long }}</span>
+            <span class="crumb-build__size-badge crumb-build__size-badge--short{% if is_popular %} is-popular{% endif %}">{{ badge_short }}</span>
+          {%- endif -%}
+          <span class="crumb-build__size-pack">{{ 'crumb.build.size_pack' | t: count: slots }}</span>
+          <span class="crumb-build__size-count" aria-hidden="true">{{ slots }}</span>
+          <span class="crumb-build__size-text">
+            <span class="crumb-build__size-title">{{ bundle.title | escape }}</span>
+            <span class="crumb-build__size-meta">
+              <span>{{ variant.price | money }}</span>
+              <span class="crumb-build__size-meta-count">&nbsp;&bull; {{ 'crumb.build.size_snacks' | t: count: slots }}</span>
+            </span>
+            {%- if bundle.available == false -%}
+              <span class="crumb-build__size-note">{{ 'crumb.build.size_sold_out' | t }}</span>
+            {%- endif -%}
+          </span>
+        </span>
+      </label>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- capture strings_json -%}
+  {
+    "tray_title": {{ 'crumb.build.tray_title' | t: size: '%size%' | json }},
+    "filled": {{ 'crumb.build.filled' | t: filled: '%filled%', total: '%total%' | json }},
+    "slots_selected": {{ 'crumb.build.slots_selected' | t: filled: '%filled%', total: '%total%' | json }},
+    "packed": {{ 'crumb.build.packed' | t: percent: '%percent%' | json }},
+    "complete": {{ 'crumb.build.complete' | t: percent: '%percent%' | json }},
+    "fill_more_one": {{ 'crumb.build.fill_more_one' | t | json }},
+    "fill_more_other": {{ 'crumb.build.fill_more_other' | t: remaining: '%remaining%' | json }},
+    "box_full": {{ 'crumb.build.box_full' | t | json }},
+    "slot": {{ 'crumb.build.slot' | t: number: '%number%' | json }},
+    "slot_open": {{ 'crumb.build.slot_open' | t | json }},
+    "slot_available": {{ 'crumb.build.slot_available' | t | json }},
+    "remove_from_slot": {{ 'crumb.build.remove_from_slot' | t: title: '%title%', number: '%number%' | json }},
+    "in_box": {{ 'crumb.build.in_box' | t: count: '%count%' | json }},
+    "box_format_value": {{ 'crumb.build.box_format_value' | t: title: '%title%', count: '%count%' | json }},
+    "save_tag": {{ 'crumb.build.save_tag' | t: percent: '%percent%' | json }},
+    "save_inline": {{ 'crumb.build.save_inline' | t: percent: '%percent%' | json }},
+    "picked": {{ 'crumb.build.picked' | t: filled: '%filled%', total: '%total%' | json }},
+    "dip_title": {{ 'crumb.build.dip_title' | t: title: '%title%' | json }},
+    "dip_text_locked": {{ 'crumb.build.dip_text_locked' | t: count: '%count%' | json }},
+    "dip_text_unlocked": {{ 'crumb.build.dip_text_unlocked' | t | json }},
+    "alert_one": {{ 'crumb.build.alert_one' | t | json }},
+    "alert_other": {{ 'crumb.build.alert_other' | t: remaining: '%remaining%' | json }},
+    "alert_full": {{ 'crumb.build.alert_full' | t | json }},
+    "cta_fill_one": {{ 'crumb.build.cta_fill_one' | t | json }},
+    "cta_fill_other": {{ 'crumb.build.cta_fill_other' | t: remaining: '%remaining%' | json }},
+    "cta_add": {{ 'crumb.build.cta_add' | t | json }},
+    "cta_adding": {{ 'crumb.build.cta_adding' | t | json }},
+    "added": {{ 'crumb.build.added' | t | json }},
+    "add_error": {{ 'crumb.build.add_error' | t | json }},
+    "added_announce": {{ 'crumb.build.added_announce' | t: title: '%title%', filled: '%filled%', total: '%total%' | json }},
+    "removed_announce": {{ 'crumb.build.removed_announce' | t: title: '%title%', filled: '%filled%', total: '%total%' | json }},
+    "cleared_announce": {{ 'crumb.build.cleared_announce' | t | json }},
+    "switched_announce": {{ 'crumb.build.switched_announce' | t: size: '%size%', filled: '%filled%', total: '%total%' | json }},
+    "full_hint": {{ 'crumb.build.full_hint' | t | json }},
+    "reset_title": {{ 'crumb.build.reset_title' | t | json }},
+    "reset_body": {{ 'crumb.build.reset_body' | t: count: '%count%' | json }},
+    "reset_confirm": {{ 'crumb.build.reset_confirm' | t | json }},
+    "keep_box": {{ 'crumb.build.keep_box' | t | json }},
+    "switch_title": {{ 'crumb.build.switch_title' | t: size: '%size%' | json }},
+    "switch_body": {{ 'crumb.build.switch_body' | t: capacity: '%capacity%', picked: '%picked%', remove: '%remove%' | json }},
+    "switch_confirm": {{ 'crumb.build.switch_confirm' | t | json }},
+    "notice_unavailable": {{ 'crumb.build.notice_unavailable' | t | json }},
+    "notice_trimmed": {{ 'crumb.build.notice_trimmed' | t | json }},
+    "slot_property": {{ 'crumb.build.slot_property' | t: number: '%number%' | json }},
+    "variant_label": {{ 'crumb.build.variant_label' | t: title: '%title%', variant: '%variant%' | json }},
+    "choose_sold_out": {{ 'crumb.build.choose_sold_out' | t | json }},
+    "filter_status_one": {{ 'crumb.build.filter_status_one' | t | json }},
+    "filter_status_other": {{ 'crumb.build.filter_status_other' | t: count: '%count%' | json }}
+  }
+{%- endcapture -%}
+
+{%- if size_count == 0 -%}
+  {%- if request.design_mode -%}
+    <div class="crumb-build crumb-build--empty">
+      <p class="crumb-build__hint">{{ 'crumb.build.empty_hint' | t }}</p>
+    </div>
+  {%- endif -%}
+{%- else -%}
+  <div
+    class="crumb-build"
+    style="
+      --cb-padding-top: {{ section.settings.padding_top }}px;
+      --cb-padding-bottom: {{ section.settings.padding_bottom }}px;
+    "
+  >
+    <crumb-build-box
+      class="crumb-build__inner"
+      data-cart-add-url="{{ routes.cart_add_url }}.js"
+      data-cart-url="{{ routes.cart_url }}"
+      {% if dip_ok %}
+        data-dip-variant="{{ dip_variant.id }}"
+        data-dip-title="{{ dip.title | escape }}"
+        data-dip-min="{{ section.settings.dip_min_slots }}"
+      {% endif %}
+    >
+      <script type="application/json" data-strings>
+        {{ strings_json }}
+      </script>
+
+      {%- comment -%} One polite live region for count changes, one alert for errors. {%- endcomment -%}
+      <p class="crumb-build__sr" role="status" aria-live="polite" data-live></p>
+      <span class="crumb-build__sr" id="{{ box_id }}-full-hint" data-full-hint></span>
+
+      <header class="crumb-build__header">
+        <div class="crumb-build__header-main">
+          {%- if tag_text != blank -%}
+            <p class="crumb-build__tag">
+              <svg
+                class="crumb-build__icon"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3ZM4 7.5l8 4.5 8-4.5M12 12v9"/>
+              </svg>
+              {{ tag_text | escape }}
+            </p>
+          {%- endif -%}
+          {%- if heading_text != blank or heading_accent != blank -%}
+            <h1 class="crumb-build__heading">
+              {{ heading_text | escape }}
+              {%- if heading_accent != blank %}
+                <span class="crumb-build__accent">{{ heading_accent | escape }}</span>
+              {%- endif -%}
+            </h1>
+          {%- endif -%}
+          {%- if intro_text != blank -%}
+            <p class="crumb-build__intro">{{ intro_text | escape }}</p>
+          {%- endif -%}
+        </div>
+
+        {%- if perk_1 != blank or perk_2 != blank -%}
+          <ul class="crumb-build__perks" role="list">
+            {%- if perk_1 != blank -%}
+              <li class="crumb-build__perk">
+                <span class="crumb-build__perk-dot" aria-hidden="true"></span>{{ perk_1 | escape }}
+              </li>
+            {%- endif -%}
+            {%- if perk_2 != blank -%}
+              <li class="crumb-build__perk crumb-build__perk--accent">
+                <svg
+                  class="crumb-build__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M2 6h12v10H2zM14 10h4l3 3v3h-7M6 19.5a1.5 1.5 0 1 0 0-.01M17 19.5a1.5 1.5 0 1 0 0-.01"/>
+                </svg>
+                {{ perk_2 | escape }}
+              </li>
+            {%- endif -%}
+          </ul>
+        {%- endif -%}
+      </header>
+
+      <noscript>
+        <p class="crumb-build__nojs">{{ 'crumb.build.no_js' | t }}</p>
+      </noscript>
+
+      <div class="crumb-build__sizes">
+        <span class="crumb-build__size-label" id="{{ box_id }}-size-label">
+          <svg
+            class="crumb-build__icon"
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M3 8h18v8H3zM7 8v4M11 8v3M15 8v4M19 8v3"/>
+          </svg>
+          {{ 'crumb.build.select_size' | t }}
+        </span>
+        <div class="crumb-build__size-group" role="radiogroup" aria-labelledby="{{ box_id }}-size-label">
+          {{ size_items }}
+        </div>
+      </div>
+
+      <p class="crumb-build__notice" data-notice hidden></p>
+
+      <div class="crumb-build__layout">
+        <section class="crumb-build__tray" aria-labelledby="{{ box_id }}-tray-title">
+          <span class="crumb-build__tape" aria-hidden="true">{{ 'crumb.build.tape' | t }}</span>
+
+          <header class="crumb-build__tray-header">
+            <div class="crumb-build__tray-lead">
+              <span class="crumb-build__tray-icon" aria-hidden="true">
+                <svg class="crumb-build__icon" viewBox="0 0 24 24" width="24" height="24" focusable="false">
+                  <path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3ZM4 7.5l8 4.5 8-4.5M12 12v9"/>
+                </svg>
+                <span class="crumb-build__tray-number" data-tray-number></span>
+              </span>
+              <div class="crumb-build__tray-heading">
+                <div class="crumb-build__tray-line">
+                  <h2 class="crumb-build__tray-title" id="{{ box_id }}-tray-title" tabindex="-1" data-tray-title></h2>
+                  <span class="crumb-build__badge" data-badge></span>
+                </div>
+                <p class="crumb-build__tray-hint">{{ 'crumb.build.tray_hint' | t }}</p>
+                <p class="crumb-build__tray-selected" data-selected></p>
+              </div>
+            </div>
+            <div class="crumb-build__tray-actions">
+              <span class="crumb-build__packed" data-packed></span>
+              <button type="button" class="crumb-build__reset" data-reset>
+                <svg
+                  class="crumb-build__icon"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/>
+                </svg>
+                {{ 'crumb.build.reset' | t }}
+              </button>
+            </div>
+          </header>
+
+          <div class="crumb-build__progress-wrap">
+            <div class="crumb-build__progress-meta">
+              <span class="crumb-build__progress-text" data-progress-text></span>
+              <span class="crumb-build__percent" data-percent></span>
+            </div>
+            <div
+              class="crumb-build__progress"
+              role="progressbar"
+              aria-label="{{ 'crumb.build.progress_label' | t }}"
+              aria-valuemin="0"
+              aria-valuemax="1"
+              aria-valuenow="0"
+              data-progress
+            >
+              <span class="crumb-build__progress-fill"></span>
+            </div>
+          </div>
+
+          {%- if dip_ok -%}
+            <div class="crumb-build__dip crumb-build__dip--tray" data-dip-banner>
+              <svg
+                class="crumb-build__icon"
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M3 8h18v4H3zM12 8v13M5 12v9h14v-9M12 8C10 3 6 4 7 8M12 8c2-5 6-4 5 0"/>
+              </svg>
+              <span class="crumb-build__dip-copy"><strong data-dip-title></strong> <span data-dip-text></span></span>
+            </div>
+          {%- endif -%}
+
+          <ol class="crumb-build__slots" role="list" data-slots></ol>
+        </section>
+
+        <aside class="crumb-build__summary" aria-labelledby="{{ box_id }}-summary-title">
+          <div class="crumb-build__summary-card">
+            <span class="crumb-build__stamp" aria-hidden="true">{{ 'crumb.build.hand_packed' | t }}</span>
+
+            <div class="crumb-build__summary-top">
+              <div class="crumb-build__summary-left">
+                <span class="crumb-build__picked" data-picked></span>
+                <span class="crumb-build__save-inline" data-save-inline></span>
+              </div>
+              <span class="crumb-build__price-group">
+                <span class="crumb-build__price" data-price></span>
+                <s class="crumb-build__base-inline" data-base-inline></s>
+              </span>
+            </div>
+
+            <div class="crumb-build__summary-details">
+              <h2 class="crumb-build__summary-title" id="{{ box_id }}-summary-title">
+                {{ 'crumb.build.summary_title' | t }}
+              </h2>
+              <p class="crumb-build__summary-text">{{ 'crumb.build.summary_text' | t }}</p>
+
+              <dl class="crumb-build__facts">
+                <div class="crumb-build__fact">
+                  <dt>{{ 'crumb.build.box_format' | t }}</dt>
+                  <dd data-size-name></dd>
+                </div>
+                <div class="crumb-build__fact" data-base-row>
+                  <dt>{{ 'crumb.build.base_value' | t }}</dt>
+                  <dd><s data-base></s></dd>
+                </div>
+                <div class="crumb-build__fact">
+                  <dt>{{ 'crumb.build.box_price' | t }}</dt>
+                  <dd class="crumb-build__fact-strong" data-tier-price></dd>
+                </div>
+                <div class="crumb-build__fact crumb-build__fact--discount" data-discount-row>
+                  <dt>
+                    <svg
+                      class="crumb-build__icon"
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M3 12V4h8l10 10-8 8L3 12ZM7.5 8.5h.01"/>
+                    </svg>
+                    {{ 'crumb.build.box_discount' | t }}
+                  </dt>
+                  <dd><span class="crumb-build__save-tag" data-discount-tag></span></dd>
+                </div>
+              </dl>
+
+              {%- if dip_ok -%}
+                <div class="crumb-build__dip crumb-build__dip--summary" data-dip-banner>
+                  <svg
+                    class="crumb-build__icon"
+                    viewBox="0 0 24 24"
+                    width="26"
+                    height="26"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M3 8h18v4H3zM12 8v13M5 12v9h14v-9M12 8C10 3 6 4 7 8M12 8c2-5 6-4 5 0"/>
+                  </svg>
+                  <span class="crumb-build__dip-copy"
+                    ><strong data-dip-title></strong> <span data-dip-text></span
+                  ></span>
+                </div>
+              {%- endif -%}
+
+              <p class="crumb-build__alert" data-alert>
+                <svg
+                  class="crumb-build__icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>
+                </svg>
+                <span data-alert-text></span>
+              </p>
+            </div>
+
+            <div class="crumb-build__summary-foot">
+              <button type="button" class="crumb-build__cta" data-cta aria-disabled="true">
+                <svg
+                  class="crumb-build__icon crumb-build__cta-basket"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M4 9h16l-1.5 11h-13L4 9ZM8 9l3-5M16 9l-3-5"/>
+                </svg>
+                <span data-cta-label></span>
+                <svg
+                  class="crumb-build__icon crumb-build__cta-arrow"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 5v14m0 0 6-6m-6 6-6-6"/>
+                </svg>
+              </button>
+
+              <p class="crumb-build__error" role="alert" data-error hidden></p>
+              <p class="crumb-build__success" data-success hidden>
+                <span>{{ 'crumb.build.added' | t }}</span>
+                <a href="{{ routes.cart_url }}">{{ 'crumb.build.view_cart' | t }}</a>
+              </p>
+
+              {%- if guarantee != blank -%}
+                <p class="crumb-build__guarantee">
+                  <svg
+                    class="crumb-build__icon"
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+                  </svg>
+                  {{ guarantee | escape }}
+                </p>
+              {%- endif -%}
+            </div>
+          </div>
+        </aside>
+
+        <section class="crumb-build__catalog" aria-labelledby="{{ box_id }}-catalog-title">
+          <h2 class="crumb-build__sr" id="{{ box_id }}-catalog-title">{{ 'crumb.build.catalog_title' | t }}</h2>
+
+          {%- assign filter_lines = section.settings.filter_tags | strip | newline_to_br | split: '<br />' -%}
+
+          <div class="crumb-build__filters" role="group" aria-label="{{ 'crumb.build.filter_label' | t }}">
+            <ul class="crumb-build__chips" role="list">
+              <li>
+                <button type="button" class="crumb-build__chip" data-filter-chip="" aria-pressed="true">
+                  {{ 'crumb.build.filter_all' | t: count: snacks.products_count }}
+                </button>
+              </li>
+              {%- for line in filter_lines -%}
+                {%- assign parts = line | strip | split: '|' -%}
+                {%- assign chip_tag = parts[0] | strip | handleize -%}
+                {%- if chip_tag != blank -%}
+                  {%- assign chip_label = parts[1] | default: parts[0] | strip -%}
+                  {%- assign chip_emoji = parts[2] | strip -%}
+                  <li>
+                    <button
+                      type="button"
+                      class="crumb-build__chip"
+                      data-filter-chip="{{ chip_tag }}"
+                      aria-pressed="false"
+                    >
+                      {{ chip_label | escape }}
+                      {%- if chip_emoji != blank %}
+                        <span aria-hidden="true">{{ chip_emoji | escape }}</span>
+                      {%- endif -%}
+                    </button>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+
+            <div class="crumb-build__filter-tools">
+              <div class="crumb-build__search" role="search">
+                <label class="crumb-build__sr" for="{{ box_id }}-search">{{ 'crumb.build.search_label' | t }}</label>
+                <svg
+                  class="crumb-build__icon crumb-build__search-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+                </svg>
+                <input
+                  class="crumb-build__search-input"
+                  type="search"
+                  id="{{ box_id }}-search"
+                  placeholder="{{ 'crumb.build.search_placeholder' | t }}"
+                  autocomplete="off"
+                  data-search
+                >
+              </div>
+              <button type="button" class="crumb-build__toggle" data-diet-toggle="gluten-free" aria-pressed="false">
+                {{ 'crumb.build.diet_gluten_free' | t }}
+              </button>
+              <button type="button" class="crumb-build__toggle" data-diet-toggle="vegan" aria-pressed="false">
+                {{ 'crumb.build.diet_vegan' | t }}
+              </button>
+            </div>
+          </div>
+
+          <p class="crumb-build__sr" role="status" aria-live="polite" data-filter-status></p>
+
+          <p class="crumb-build__filter-empty" data-filter-empty hidden>
+            {{ 'crumb.build.filter_empty' | t }}
+            <button type="button" class="crumb-build__filter-clear" data-filter-clear>
+              {{ 'crumb.build.filter_clear' | t }}
+            </button>
+          </p>
+
+          <ul class="crumb-build__catalog-grid" role="list">
+            {%- for snack in snacks.products limit: 50 -%}
+              {%- liquid
+                assign tint = forloop.index0 | modulo: 3
+              -%}
+              {%- render 'crumb-snack-picker-card', product: snack, tint: tint, box_id: box_id -%}
+            {%- endfor -%}
+          </ul>
+        </section>
+      </div>
+
+      {%- if promise_title != blank or promise_text != blank -%}
+        <aside class="crumb-build__promise">
+          <svg
+            class="crumb-build__icon"
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3ZM8.5 12l2.5 2.5 4.5-5"/>
+          </svg>
+          <p class="crumb-build__promise-copy">
+            {%- if promise_title != blank -%}
+              <strong>{{ promise_title | escape }}</strong>
+            {% endif -%}
+            {{ promise_text | escape }}
+          </p>
+        </aside>
+      {%- endif -%}
+
+      <dialog
+        class="crumb-build__dialog"
+        data-dialog
+        aria-labelledby="{{ box_id }}-dialog-title"
+        aria-describedby="{{ box_id }}-dialog-body"
+      >
+        <form method="dialog" class="crumb-build__dialog-card">
+          <h2 class="crumb-build__dialog-title" id="{{ box_id }}-dialog-title" data-dialog-title></h2>
+          <p class="crumb-build__dialog-body" id="{{ box_id }}-dialog-body" data-dialog-body></p>
+          <div class="crumb-build__dialog-actions">
+            <button type="submit" value="cancel" class="crumb-build__dialog-button" data-dialog-cancel></button>
+            <button
+              type="submit"
+              value="confirm"
+              class="crumb-build__dialog-button crumb-build__dialog-button--primary"
+              data-dialog-confirm
+            ></button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="crumb-build__dialog" data-chooser aria-labelledby="{{ box_id }}-chooser-title">
+        <form method="dialog" class="crumb-build__dialog-card">
+          <h2 class="crumb-build__dialog-title" id="{{ box_id }}-chooser-title" data-chooser-title></h2>
+          <fieldset class="crumb-build__chooser-options" data-chooser-options>
+            <legend class="crumb-build__sr">{{ 'crumb.build.choose_legend' | t }}</legend>
+          </fieldset>
+          <div class="crumb-build__dialog-actions">
+            <button type="button" class="crumb-build__dialog-button" data-chooser-cancel>
+              {{ 'crumb.build.choose_cancel' | t }}
+            </button>
+            <button
+              type="submit"
+              value="confirm"
+              class="crumb-build__dialog-button crumb-build__dialog-button--primary"
+            >
+              {{ 'crumb.build.choose_add' | t }}
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </crumb-build-box>
+  </div>
+
+  <script src="{{ 'crumb-build-box.js' | asset_url }}" type="module"></script>
+{%- endif -%}
+
+{% stylesheet %}
+  .crumb-build {
+    padding-block: var(--cb-padding-top, 0) var(--cb-padding-bottom, 0);
+    font-family: var(--crumb-font-body);
+    color: var(--crumb-ink);
+  }
+
+  .crumb-build [hidden] {
+    display: none !important;
+  }
+
+  .crumb-build__hint {
+    margin: 0;
+    padding: 1rem;
+    text-align: center;
+    border: 2px dashed var(--crumb-ink);
+  }
+
+  /* Do NOT put overflow on this section, the layout or any wrapper above the summary:
+     position: sticky (mobile summary bar) breaks if an ancestor has overflow set. */
+  .crumb-build__inner {
+    display: block;
+    max-inline-size: var(--crumb-container, 80rem);
+    margin-inline: auto;
+    padding-inline: var(--crumb-gutter, 1rem);
+  }
+
+  .crumb-build__sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .crumb-build__icon {
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- Header ---------- */
+  .crumb-build__header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-block-end: 1rem;
+  }
+  .crumb-build__header-main {
+    min-inline-size: 0;
+  }
+
+  .crumb-build__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0 0 0.5rem;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--crumb-on-mustard);
+    background: var(--crumb-mustard);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    transform: rotate(-2deg);
+  }
+
+  .crumb-build__heading {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: clamp(2rem, 1.4rem + 2.6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .crumb-build__accent {
+    color: var(--crumb-primary);
+    text-decoration: underline wavy var(--crumb-mustard);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .crumb-build__intro {
+    max-inline-size: 42rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--crumb-ink-muted);
+  }
+
+  .crumb-build__perks {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-build__perk {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-build__perk--accent {
+    color: var(--crumb-on-mustard-soft);
+    background: var(--crumb-mustard-soft);
+    transform: rotate(1deg);
+  }
+
+  .crumb-build__perk-dot {
+    inline-size: 0.625rem;
+    block-size: 0.625rem;
+    background: var(--crumb-mint);
+    border-radius: 50%;
+  }
+
+  .crumb-build__nojs {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    background: var(--crumb-surface-lowest);
+    border: 2px dashed var(--crumb-ink);
+    border-radius: var(--crumb-radius-md);
+  }
+
+  /* Without JavaScript the builder controls would do nothing, so hide them. */
+  crumb-build-box:not([data-js]) [data-add],
+  crumb-build-box:not([data-js]) [data-choose],
+  crumb-build-box:not([data-js]) [data-stepper],
+  crumb-build-box:not([data-js]) .crumb-build__tray,
+  crumb-build-box:not([data-js]) .crumb-build__summary,
+  crumb-build-box:not([data-js]) .crumb-build__sizes {
+    display: none;
+  }
+
+  /* ---------- Size switcher ---------- */
+  .crumb-build__sizes {
+    margin-block-end: 1.25rem;
+  }
+
+  .crumb-build__size-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .crumb-build__size-label .crumb-build__icon {
+    color: var(--crumb-primary);
+  }
+
+  /* Mobile: one pill bar with three equal buttons */
+  .crumb-build__size-group {
+    display: flex;
+    gap: 0.375rem;
+    padding: 0.375rem;
+    background: var(--crumb-surface-container);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-build__size {
+    position: relative;
+    display: block;
+    flex: 1 1 0;
+    min-inline-size: 0;
+    cursor: pointer;
+  }
+
+  .crumb-build__size-input {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .crumb-build__size-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    block-size: 100%;
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    transition: box-shadow var(--crumb-transition), transform var(--crumb-transition);
+  }
+
+  .crumb-build__size-input:checked + .crumb-build__size-card {
+    color: var(--crumb-surface-lowest);
+    background: var(--crumb-primary);
+    box-shadow: var(--crumb-shadow-md);
+    transform: translateY(-0.125rem);
+  }
+
+  .crumb-build__size-input:focus-visible + .crumb-build__size-card {
+    outline: 3px solid var(--crumb-ink);
+    outline-offset: 3px;
+  }
+
+  .crumb-build__size-input:disabled {
+    cursor: not-allowed;
+  }
+  .crumb-build__size-input:disabled + .crumb-build__size-card {
+    color: var(--crumb-ink-muted);
+    border-style: dashed;
+    box-shadow: var(--crumb-shadow-none);
+  }
+
+  .crumb-build__size-pack {
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--crumb-ink-muted);
+  }
+
+  .crumb-build__size-input:checked + .crumb-build__size-card .crumb-build__size-pack {
+    color: color-mix(in srgb, var(--crumb-surface-lowest) 85%, var(--crumb-primary));
+  }
+
+  .crumb-build__size-count {
+    display: none;
+  }
+
+  .crumb-build__size-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-inline-size: 0;
+  }
+
+  .crumb-build__size-title {
+    font-family: var(--crumb-font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .crumb-build__size-meta {
+    margin-block-start: 0.125rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--crumb-ink-muted);
+  }
+  .crumb-build__size-input:checked + .crumb-build__size-card .crumb-build__size-meta {
+    color: color-mix(in srgb, var(--crumb-surface-lowest) 90%, var(--crumb-primary));
+  }
+  .crumb-build__size-meta-count {
+    display: none;
+  }
+
+  .crumb-build__size-note {
+    font-size: 0.6875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .crumb-build__size-badge {
+    position: absolute;
+    inset-block-start: -0.75rem;
+    inset-inline-start: 50%;
+    z-index: 1;
+    padding: 0 0.375rem;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    line-height: 1.5;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--crumb-on-mint);
+    background: var(--crumb-mint);
+    border: 1px solid var(--crumb-ink);
+    border-radius: var(--crumb-radius-sm);
+    box-shadow: var(--crumb-shadow-xs);
+    transform: translateX(-50%) rotate(-2deg);
+  }
+
+  .crumb-build__size-badge.is-popular {
+    color: var(--crumb-surface-lowest);
+    background: var(--crumb-primary);
+  }
+  .crumb-build__size-badge--long {
+    display: none;
+  }
+
+  /* ---------- Layout ---------- */
+  .crumb-build__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .crumb-build__tray {
+    order: 1;
+  }
+  .crumb-build__catalog {
+    order: 2;
+    min-inline-size: 0;
+  }
+  .crumb-build__summary {
+    order: 3;
+  }
+
+  /* ---------- Tray ---------- */
+  .crumb-build__tray {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-inline-size: 0;
+    padding: 0.875rem;
+    background: var(--crumb-surface-low);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-build__tape {
+    display: none;
+  }
+
+  .crumb-build__tray-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .crumb-build__tray-lead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+  }
+
+  .crumb-build__tray-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    font-family: var(--crumb-font-display);
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--crumb-on-mustard);
+    background: var(--crumb-mustard);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-build__tray-icon .crumb-build__icon {
+    display: none;
+  }
+
+  .crumb-build__tray-heading {
+    min-inline-size: 0;
+  }
+  .crumb-build__tray-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+
+  .crumb-build__tray-title {
+    margin: 0;
+    font-family: var(--crumb-font-display);
+    font-size: 0.9375rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .crumb-build__tray-title:focus {
+    outline: none;
+  }
+  .crumb-build__tray-title:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-build__badge {
+    display: none;
+  }
+  .crumb-build__tray-hint {
+    display: none;
+  }
+  .crumb-build__tray-selected {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--crumb-ink-muted);
+  }
+
+  .crumb-build__tray-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+    flex-shrink: 0;
+  }
+
+  .crumb-build__packed {
+    padding: 0.0625rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    background: color-mix(in srgb, var(--crumb-ink) 10%, var(--crumb-surface-lowest));
+    border-radius: var(--crumb-radius-full);
+  }
+
+  .crumb-build__reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-block-size: 2.75rem;
+    padding: 0 0.25rem;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    color: var(--crumb-ink-muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .crumb-build__reset:hover {
+    color: var(--crumb-primary);
+  }
+  .crumb-build__reset .crumb-build__icon {
+    display: none;
+  }
+
+  .crumb-build__progress-meta {
+    display: none;
+  }
+
+  .crumb-build__progress-text {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .crumb-build__progress {
+    block-size: 0.75rem;
+    padding: 2px;
+    background: color-mix(in srgb, var(--crumb-ink) 12%, var(--crumb-surface-lowest));
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-full);
+    overflow: hidden;
+  }
+
+  .crumb-build__progress-fill {
+    display: block;
+    inline-size: var(--crumb-build-progress, 0%);
+    block-size: 100%;
+    background: var(--crumb-mustard);
+    border-radius: var(--crumb-radius-full);
+    transition: inline-size 300ms ease;
+  }
+
+  /* Free-dip banner: in the tray on mobile, in the summary on desktop */
+  .crumb-build__dip {
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--crumb-ink);
+    background: color-mix(in srgb, var(--crumb-mint) 32%, var(--crumb-surface-lowest));
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-build__dip--tray {
+    display: flex;
+  }
+  .crumb-build__dip--summary {
+    display: none;
+  }
+  .crumb-build__dip .crumb-build__icon {
+    color: var(--crumb-mint-deep);
+  }
+
+  /* Slots: 3 columns */
+  .crumb-build__slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.375rem 0.375rem 0 0;
+    list-style: none;
+  }
+
+  .crumb-build__slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-inline-size: 0;
+    padding: 0.375rem;
+    text-align: center;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+  }
+
+  .crumb-build__slot--filled {
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-build__slot--empty {
+    justify-content: center;
+    aspect-ratio: 4 / 5;
+    color: var(--crumb-ink-muted);
+    background: color-mix(in srgb, var(--crumb-surface-lowest) 50%, transparent);
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--crumb-ink) 45%, transparent);
+  }
+
+  .crumb-build__slot-media {
+    inline-size: 100%;
+    aspect-ratio: 1;
+    margin-block-end: 0.25rem;
+    overflow: hidden;
+    background: var(--crumb-mustard-soft);
+    border-radius: var(--crumb-radius-sm);
+  }
+
+  .crumb-build__slot-media img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .crumb-build__slot-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .crumb-build__slot-name {
+    inline-size: 100%;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .crumb-build__slot-price {
+    font-size: 0.625rem;
+    color: var(--crumb-ink-muted);
+  }
+  .crumb-build__slot-price::after {
+    content: ' \2022  1\00d7';
+  }
+
+  .crumb-build__slot-remove {
+    position: absolute;
+    inset-block-start: -0.5rem;
+    inset-inline-end: -0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    padding: 0;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--crumb-surface-lowest);
+    background: var(--crumb-primary);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: var(--crumb-shadow-xs);
+    cursor: pointer;
+  }
+
+  /* 44px hit area without a 44px button */
+  .crumb-build__slot-remove::after {
+    content: '';
+    position: absolute;
+    inset: -0.75rem;
+  }
+
+  .crumb-build__slot-plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    margin-block-end: 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1;
+    background: color-mix(in srgb, var(--crumb-ink) 10%, var(--crumb-surface-lowest));
+    border-radius: 50%;
+  }
+
+  .crumb-build__slot-label {
+    font-size: 0.625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .crumb-build__slot-open {
+    display: none;
+  }
+  .crumb-build__slot-available {
+    font-size: 0.5625rem;
+  }
+
+  .crumb-build__slot-remove:focus-visible,
+  .crumb-build__reset:focus-visible,
+  .crumb-build__cta:focus-visible,
+  .crumb-build__dialog-button:focus-visible,
+  .crumb-build__summary-card a:focus-visible,
+  .crumb-build__chooser-option:has(input:focus-visible) {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Summary: sticky bar on mobile ---------- */
+  .crumb-build__summary {
+    position: sticky;
+    inset-block-end: var(--crumb-mobile-nav-height, 4rem);
+    z-index: 3;
+    margin-inline: calc(var(--crumb-gutter, 0.75rem) * -1);
+  }
+
+  .crumb-build__summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem var(--crumb-gutter, 0.75rem) 0.5rem;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-inline: 0;
+    border-block-end: 0;
+    border-radius: var(--crumb-radius-lg) var(--crumb-radius-lg) 0 0;
+  }
+
+  .crumb-build__stamp {
+    display: none;
+  }
+
+  .crumb-build__summary-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .crumb-build__summary-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+
+  .crumb-build__picked {
+    padding: 0.0625rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--crumb-on-mustard);
+    background: var(--crumb-mustard);
+    border-radius: var(--crumb-radius-full);
+  }
+
+  .crumb-build__save-inline {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--crumb-ink-muted);
+  }
+  .crumb-build__price-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.375rem;
+  }
+  .crumb-build__price {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+  .crumb-build__base-inline {
+    font-size: 0.75rem;
+    color: var(--crumb-ink-muted);
+  }
+
+  .crumb-build__summary-details {
+    display: none;
+  }
+  .crumb-build__summary-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .crumb-build__cta {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    inline-size: 100%;
+    min-block-size: 3rem;
+    padding: 0.5rem 1rem;
+    font-family: var(--crumb-font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--crumb-on-coral);
+    background: var(--crumb-coral);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+    cursor: pointer;
+    transition: box-shadow var(--crumb-transition), transform var(--crumb-transition);
+  }
+
+  .crumb-build__cta:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  /* Mobile mockup: the not-ready button is red with a down arrow (it scrolls to the snacks) */
+  .crumb-build__cta[aria-disabled='true'] {
+    color: var(--crumb-surface-lowest);
+    background: var(--crumb-primary);
+  }
+
+  .crumb-build__cta[aria-disabled='true'] .crumb-build__cta-basket,
+  .crumb-build__cta:not([aria-disabled='true']) .crumb-build__cta-arrow {
+    display: none;
+  }
+
+  .crumb-build__error,
+  .crumb-build__success {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+  }
+
+  .crumb-build__error {
+    border-style: dashed;
+  }
+  .crumb-build__error::before {
+    content: '! ';
+    font-weight: 800;
+  }
+  .crumb-build__success {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    justify-content: space-between;
+  }
+  .crumb-build__success a {
+    color: var(--crumb-primary);
+    font-weight: 800;
+  }
+
+  .crumb-build__guarantee {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 0;
+    font-size: 0.6875rem;
+    text-align: center;
+    color: var(--crumb-ink-muted);
+  }
+
+  /* ---------- Catalog ---------- */
+  .crumb-build__catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* ---------- Promise card (mobile mockup only) ---------- */
+  .crumb-build__promise {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-block-start: 1.5rem;
+    padding: 0.75rem;
+    background: var(--crumb-surface-low);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+
+  .crumb-build__promise .crumb-build__icon {
+    margin-block-start: 0.125rem;
+    color: var(--crumb-primary);
+  }
+  .crumb-build__promise-copy {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--crumb-ink-muted);
+  }
+  .crumb-build__promise-copy strong {
+    display: block;
+    color: var(--crumb-ink);
+  }
+
+  /* ---------- Filter bar ---------- */
+  .crumb-build__filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-block-end: 1rem;
+    padding: 0.75rem;
+    background: var(--crumb-surface-low);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-md);
+  }
+
+  .crumb-build__chips,
+  .crumb-build__filter-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .crumb-build__chip,
+  .crumb-build__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    padding: 0.25rem 0.875rem;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--crumb-ink);
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    cursor: pointer;
+    transition: background var(--crumb-transition), box-shadow var(--crumb-transition),
+      transform var(--crumb-transition);
+  }
+
+  .crumb-build__chip:active,
+  .crumb-build__toggle:active {
+    box-shadow: var(--crumb-shadow-none);
+    transform: translate(2px, 2px);
+  }
+
+  .crumb-build__chip[aria-pressed='true'] {
+    color: var(--crumb-surface-lowest);
+    background: var(--crumb-primary);
+  }
+
+  .crumb-build__toggle {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .crumb-build__toggle[aria-pressed='true'] {
+    color: var(--crumb-on-mustard);
+    background: var(--crumb-mustard);
+  }
+
+  .crumb-build__search {
+    position: relative;
+    flex: 1 1 100%;
+    min-inline-size: 0;
+  }
+
+  .crumb-build__search-icon {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 0.75rem;
+    color: var(--crumb-ink-muted);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .crumb-build__search-input {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--crumb-ink);
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+  }
+
+  .crumb-build__chip:focus-visible,
+  .crumb-build__toggle:focus-visible,
+  .crumb-build__search-input:focus-visible,
+  .crumb-build__filter-clear:focus-visible {
+    outline: 3px solid var(--crumb-primary);
+    outline-offset: 2px;
+  }
+
+  .crumb-build__filter-empty {
+    margin: 0 0 1rem;
+    padding: 1rem;
+    font-weight: 700;
+    text-align: center;
+    background: var(--crumb-surface-lowest);
+    border: 2px dashed var(--crumb-ink);
+    border-radius: var(--crumb-radius-md);
+  }
+
+  .crumb-build__filter-clear {
+    margin-inline-start: 0.5rem;
+    padding: 0.5rem;
+    font: inherit;
+    font-weight: 800;
+    color: var(--crumb-primary);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  /* ---------- Confirm + variant dialogs ---------- */
+  .crumb-build__dialog {
+    inline-size: min(26rem, calc(100vw - 2rem));
+    padding: 0;
+    color: var(--crumb-ink);
+    background: transparent;
+    border: 0;
+  }
+
+  .crumb-build__dialog::backdrop {
+    background: color-mix(in srgb, var(--crumb-ink) 55%, transparent);
+  }
+
+  .crumb-build__dialog-card {
+    padding: 1.25rem;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-lg);
+    box-shadow: var(--crumb-shadow-overlay);
+  }
+
+  .crumb-build__dialog-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--crumb-font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+  .crumb-build__dialog-body {
+    margin: 0 0 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--crumb-ink-muted);
+  }
+  .crumb-build__dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .crumb-build__dialog-button {
+    min-block-size: 2.75rem;
+    padding: 0.5rem 1rem;
+    font: inherit;
+    font-weight: 800;
+    color: var(--crumb-ink);
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    box-shadow: var(--crumb-shadow-sm);
+    cursor: pointer;
+  }
+
+  .crumb-build__dialog-button--primary {
+    color: var(--crumb-on-coral);
+    background: var(--crumb-coral);
+  }
+
+  .crumb-build__chooser-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    max-block-size: 50vh;
+    margin: 0 0 1rem;
+    padding: 4px;
+    overflow-y: auto;
+    border: 0;
+  }
+
+  .crumb-build__chooser-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-block-size: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+    background: var(--crumb-surface-lowest);
+    border: var(--crumb-border);
+    border-radius: var(--crumb-radius-md);
+    cursor: pointer;
+  }
+
+  .crumb-build__chooser-option input {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    margin: 0;
+    accent-color: var(--crumb-ink);
+  }
+  .crumb-build__chooser-option:has(input:checked) {
+    color: var(--crumb-on-mustard-soft);
+    background: var(--crumb-mustard-soft);
+    box-shadow: var(--crumb-shadow-sm);
+  }
+  .crumb-build__chooser-option:has(input:disabled) {
+    color: var(--crumb-ink-muted);
+    border-style: dashed;
+    cursor: not-allowed;
+  }
+  .crumb-build__chooser-name {
+    flex: 1;
+  }
+
+  /* ========================================================================
+     Desktop and tablet (>= 750px): follows the "Build a Box" desktop mockup
+     ======================================================================== */
+  @media (min-width: 750px) {
+    .crumb-build__header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-block-end: 1.5rem;
+    }
+    .crumb-build__intro {
+      font-size: 1.125rem;
+    }
+    .crumb-build__perks {
+      display: flex;
+      align-self: flex-end;
+    }
+
+    /* Sizes: "Select size:" label + separate buttons */
+    .crumb-build__sizes {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+      margin-block-end: 1.5rem;
+    }
+
+    .crumb-build__size-label {
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      margin: 0;
+      overflow: visible;
+      clip-path: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--crumb-font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .crumb-build__size-group {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.5rem 0.25rem 0.25rem 0;
+      background: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .crumb-build__size {
+      flex: 0 0 auto;
+    }
+
+    .crumb-build__size-card {
+      flex-direction: row;
+      gap: 0.75rem;
+      padding: 0.625rem 1rem;
+      text-align: start;
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    .crumb-build__size-card:hover {
+      box-shadow: var(--crumb-shadow-overlay);
+    }
+
+    .crumb-build__size-input:checked + .crumb-build__size-card {
+      color: var(--crumb-on-mustard-soft);
+      background: var(--crumb-mustard-soft);
+      box-shadow: var(--crumb-shadow-lg);
+      transform: translateY(-0.25rem);
+    }
+
+    .crumb-build__size-pack {
+      display: none;
+    }
+
+    .crumb-build__size-count {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      inline-size: 1.75rem;
+      block-size: 1.75rem;
+      font-size: 0.875rem;
+      font-weight: 800;
+      background: var(--crumb-surface-container);
+      border: 1px solid var(--crumb-ink);
+      border-radius: var(--crumb-radius-md);
+    }
+
+    .crumb-build__size-input:checked + .crumb-build__size-card .crumb-build__size-count {
+      color: var(--crumb-mustard-soft);
+      background: var(--crumb-ink);
+    }
+
+    .crumb-build__size-text {
+      align-items: flex-start;
+    }
+    .crumb-build__size-title {
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+    .crumb-build__size-meta {
+      font-size: 0.75rem;
+    }
+    .crumb-build__size-input:checked + .crumb-build__size-card .crumb-build__size-meta {
+      color: var(--crumb-on-mustard-soft);
+    }
+    .crumb-build__size-meta-count {
+      display: inline;
+    }
+
+    .crumb-build__size-badge {
+      inset-block-start: -0.875rem;
+      inset-inline: auto 0.75rem;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.6875rem;
+      transform: rotate(3deg);
+    }
+
+    .crumb-build__size-badge--long {
+      display: inline-block;
+    }
+    .crumb-build__size-badge--short {
+      display: none;
+    }
+
+    /* Board: tray, then summary, then catalog */
+    .crumb-build__layout {
+      gap: 2.5rem 1.5rem;
+    }
+    .crumb-build__tray,
+    .crumb-build__catalog,
+    .crumb-build__summary {
+      order: 0;
+    }
+
+    .crumb-build__tray {
+      gap: 1rem;
+      padding: 1.5rem;
+      background: color-mix(in srgb, var(--crumb-mustard-soft) 28%, var(--crumb-surface-lowest));
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: 6px 6px 0 var(--crumb-ink);
+    }
+
+    .crumb-build__tape {
+      position: absolute;
+      inset-block-start: -0.75rem;
+      inset-inline-start: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      inline-size: 12rem;
+      block-size: 1.75rem;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      color: color-mix(in srgb, var(--crumb-ink) 70%, var(--crumb-mustard-soft));
+      background: color-mix(in srgb, var(--crumb-mustard-soft) 75%, var(--crumb-surface-lowest));
+      border: var(--crumb-border);
+      box-shadow: var(--crumb-shadow-xs);
+      transform: translateX(-50%) rotate(1deg);
+      pointer-events: none;
+    }
+
+    .crumb-build__tray-header {
+      align-items: center;
+      padding-block: 0.5rem 1rem;
+      border-block-end: 2px solid color-mix(in srgb, var(--crumb-ink) 20%, transparent);
+    }
+
+    .crumb-build__tray-lead {
+      gap: 0.75rem;
+    }
+
+    .crumb-build__tray-icon {
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
+      border-radius: var(--crumb-radius-lg);
+      transform: rotate(-3deg);
+    }
+    .crumb-build__tray-icon .crumb-build__icon {
+      display: block;
+    }
+    .crumb-build__tray-number {
+      display: none;
+    }
+
+    .crumb-build__tray-title {
+      font-size: 1.5rem;
+    }
+
+    .crumb-build__badge {
+      display: inline-block;
+      padding: 0.0625rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--crumb-on-coral);
+      background: var(--crumb-coral);
+      border: 1px solid var(--crumb-ink);
+      border-radius: var(--crumb-radius-full);
+    }
+
+    .crumb-build__tray-hint {
+      display: block;
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--crumb-ink-muted);
+    }
+    .crumb-build__tray-selected,
+    .crumb-build__packed {
+      display: none;
+    }
+
+    .crumb-build__reset {
+      gap: 0.25rem;
+      font-size: 0.875rem;
+    }
+    .crumb-build__reset .crumb-build__icon {
+      display: block;
+    }
+
+    .crumb-build__progress-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-block-end: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .crumb-build__progress-text {
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      margin: 0;
+      overflow: visible;
+      clip-path: none;
+      white-space: normal;
+    }
+
+    .crumb-build__percent {
+      font-weight: 800;
+      color: var(--crumb-primary);
+      white-space: nowrap;
+    }
+
+    .crumb-build__progress {
+      block-size: 1rem;
+    }
+
+    .crumb-build__progress-fill {
+      border: 1px solid var(--crumb-ink);
+      box-sizing: border-box;
+    }
+
+    .crumb-build__dip--tray {
+      display: none;
+    }
+
+    .crumb-build__slots {
+      gap: 0.75rem;
+      padding: 0;
+    }
+
+    .crumb-build__slot--filled {
+      flex-direction: row;
+      gap: 0.625rem;
+      padding: 0.625rem;
+      text-align: start;
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    .crumb-build__slot-media {
+      flex-shrink: 0;
+      inline-size: 3rem;
+      block-size: 3rem;
+      margin: 0;
+      border: 1px solid var(--crumb-ink);
+      border-radius: var(--crumb-radius-md);
+    }
+    .crumb-build__slot-info {
+      align-items: flex-start;
+      flex: 1;
+      padding-inline-end: 1.5rem;
+    }
+    .crumb-build__slot-name {
+      font-size: 0.8125rem;
+    }
+    .crumb-build__slot-price {
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .crumb-build__slot-price::after {
+      content: none;
+    }
+
+    .crumb-build__slot-remove {
+      inset-block-start: 0.375rem;
+      inset-inline-end: 0.375rem;
+      inline-size: 1.5rem;
+      block-size: 1.5rem;
+      color: var(--crumb-ink);
+      background: var(--crumb-surface-low);
+      border: 1px solid var(--crumb-ink);
+      border-radius: var(--crumb-radius-md);
+    }
+
+    .crumb-build__slot--empty {
+      aspect-ratio: auto;
+      min-block-size: 4.25rem;
+      padding: 0.75rem;
+      border-radius: var(--crumb-radius-lg);
+    }
+    .crumb-build__slot-plus {
+      inline-size: auto;
+      block-size: auto;
+      margin: 0;
+      font-size: 1.25rem;
+      background: none;
+      border-radius: 0;
+    }
+    .crumb-build__slot-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .crumb-build__slot-open {
+      display: inline;
+    }
+    .crumb-build__slot-available {
+      display: none;
+    }
+
+    /* Summary: a card beside the tray */
+    .crumb-build__summary {
+      position: relative;
+      inset-block-end: auto;
+      z-index: auto;
+      margin-inline: 0;
+    }
+
+    .crumb-build__summary-card {
+      position: relative;
+      justify-content: space-between;
+      gap: 1rem;
+      block-size: 100%;
+      box-sizing: border-box;
+      padding: 1.5rem;
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-lg);
+    }
+
+    .crumb-build__stamp {
+      position: absolute;
+      inset-block-start: -0.75rem;
+      inset-inline-end: -0.5rem;
+      display: block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--crumb-surface-lowest);
+      background: var(--crumb-primary);
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-md);
+      box-shadow: var(--crumb-shadow-sm);
+      transform: rotate(3deg);
+    }
+
+    .crumb-build__summary-top {
+      display: none;
+    }
+    .crumb-build__summary-details {
+      display: block;
+    }
+    .crumb-build__summary-title {
+      margin: 0 0 0.25rem;
+      font-family: var(--crumb-font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .crumb-build__summary-text {
+      margin: 0 0 1rem;
+      font-size: 0.875rem;
+      color: var(--crumb-ink-muted);
+    }
+
+    .crumb-build__facts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0;
+      padding-block-end: 1rem;
+      border-block-end: 2px solid color-mix(in srgb, var(--crumb-ink) 10%, transparent);
+    }
+    .crumb-build__fact {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.9375rem;
+    }
+    .crumb-build__fact dt {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--crumb-ink-muted);
+    }
+    .crumb-build__fact dd {
+      margin: 0;
+      font-weight: 700;
+      text-align: end;
+    }
+    .crumb-build__fact dd s {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--crumb-ink);
+    }
+    .crumb-build__fact-strong {
+      font-family: var(--crumb-font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .crumb-build__fact--discount dt {
+      font-weight: 700;
+      color: var(--crumb-primary);
+    }
+
+    .crumb-build__save-tag {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--crumb-ink);
+      background: color-mix(in srgb, var(--crumb-primary) 14%, var(--crumb-surface-lowest));
+      border: 1px solid var(--crumb-ink);
+      border-radius: var(--crumb-radius-sm);
+    }
+
+    .crumb-build__dip--summary {
+      display: flex;
+      gap: 0.75rem;
+      margin-block: 1rem;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      border-radius: var(--crumb-radius-lg);
+    }
+    .crumb-build__dip-copy {
+      display: flex;
+      flex-direction: column;
+    }
+    .crumb-build__dip-copy strong {
+      font-size: 0.875rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .crumb-build__dip-copy span {
+      color: var(--crumb-ink-muted);
+    }
+
+    .crumb-build__alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--crumb-on-mustard-soft);
+      background: var(--crumb-mustard-soft);
+      border: var(--crumb-border);
+      border-radius: var(--crumb-radius-lg);
+      box-shadow: var(--crumb-shadow-sm);
+    }
+
+    .crumb-build__alert .crumb-build__icon {
+      margin-block-start: 0.0625rem;
+    }
+
+    .crumb-build__cta {
+      min-block-size: 3.25rem;
+      font-size: 1.125rem;
+      box-shadow: var(--crumb-shadow-md);
+    }
+
+    /* Desktop mockup: the not-ready button is plain grey */
+    .crumb-build__cta[aria-disabled='true'] {
+      color: color-mix(in srgb, var(--crumb-ink-muted) 90%, transparent);
+      background: color-mix(in srgb, var(--crumb-ink) 12%, var(--crumb-surface-lowest));
+      box-shadow: var(--crumb-shadow-none);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .crumb-build__cta[aria-disabled='true'] .crumb-build__cta-basket {
+      display: inline-block;
+    }
+    .crumb-build__cta .crumb-build__cta-arrow {
+      display: none;
+    }
+
+    .crumb-build__guarantee {
+      font-size: 0.75rem;
+    }
+    .crumb-build__promise {
+      display: none;
+    }
+
+    .crumb-build__catalog-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 990px) {
+    .crumb-build__layout {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      grid-template-areas:
+        'tray summary'
+        'catalog catalog';
+    }
+
+    .crumb-build__filters {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+    }
+    .crumb-build__search {
+      flex: 0 1 18rem;
+    }
+
+    .crumb-build__tray {
+      grid-area: tray;
+    }
+    .crumb-build__summary {
+      grid-area: summary;
+    }
+    .crumb-build__catalog {
+      grid-area: catalog;
+    }
+
+    .crumb-build__catalog-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumb-build__progress-fill,
+    .crumb-build__size-card,
+    .crumb-build__cta {
+      transition: none;
+    }
+    .crumb-build__cta:active {
+      transform: none;
+    }
+    .crumb-build__size-input:checked + .crumb-build__size-card {
+      transform: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Crumb build-a-box",
+  "tag": "section",
+  "class": "crumb-build-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Data"
+    },
+    {
+      "type": "collection",
+      "id": "bundles",
+      "label": "Box sizes collection",
+      "info": "Products with a custom.slot_count metafield (4, 6, 9). Order the collection cheapest first."
+    },
+    {
+      "type": "collection",
+      "id": "snacks",
+      "label": "Snacks collection",
+      "info": "Snack products. Sold-out snacks show a disabled button. Snacks with variants open a variant picker."
+    },
+    {
+      "type": "header",
+      "content": "Free dip (optional)"
+    },
+    {
+      "type": "product",
+      "id": "dip_product",
+      "label": "Dip product",
+      "info": "Leave empty to hide the free-dip banner. It is only free if you create an automatic Buy X Get Y discount in admin."
+    },
+    {
+      "type": "range",
+      "id": "dip_min_slots",
+      "label": "Free with boxes of this size or larger",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "tag",
+      "label": "Tag",
+      "default": "Custom Snack Atelier"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Build Your"
+    },
+    {
+      "type": "text",
+      "id": "heading_accent",
+      "label": "Heading accent",
+      "default": "Dream Box"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Intro text",
+      "default": "Hand-pick your favorite small-batch artisanal bites. Mix, match, and watch your bundle discount grow with every slot you lock in!"
+    },
+    {
+      "type": "text",
+      "id": "perk_1",
+      "label": "Perk 1",
+      "info": "Only promise what you offer. Blank hides it.",
+      "default": "Fresh Baked Today"
+    },
+    {
+      "type": "textarea",
+      "id": "filter_tags",
+      "label": "Filter chips",
+      "info": "One per line: tag|Label|emoji. The tag must match a product tag on your snacks. Blank hides the chips.",
+      "default": "sweet|Sweet|🍫\nsalty|Salty|🥨\nspicy|Spicy|🌶️\nprotein|Protein|⚡"
+    },
+    {
+      "type": "text",
+      "id": "perk_2",
+      "label": "Perk 2",
+      "info": "Only promise what you offer. Blank hides it.",
+      "default": "Free Ship over $25"
+    },
+    {
+      "type": "text",
+      "id": "guarantee",
+      "label": "Line under the button",
+      "info": "A policy promise: only keep it if you honour it. Blank hides it.",
+      "default": "100% Satisfaction Guarantee • Modify or Skip Anytime"
+    },
+    {
+      "type": "header",
+      "content": "Promise card (mobile)"
+    },
+    {
+      "type": "text",
+      "id": "promise_title",
+      "label": "Promise title",
+      "info": "A policy promise: only keep it if you honour it. Blank hides the card.",
+      "default": "Crumb & Co. Fresh-Bake Promise"
+    },
+    {
+      "type": "textarea",
+      "id": "promise_text",
+      "label": "Promise text",
+      "default": "Every snack is crafted small-batch. If a flavor isn't 100% crunchy, we replace your entire box instantly."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crumb build-a-box"
+    }
+  ]
+}
+{% endschema %}
