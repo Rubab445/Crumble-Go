@@ -4,8 +4,8 @@
  *
  * The page is server-rendered (sizes, snacks, prices). This element adds behavior only:
  * it keeps { size, snacks } in memory + sessionStorage, redraws the tray and summary text, and
- * sends one /cart/add.js request. It never calculates a price. It reads pre-formatted text from
- * data attributes, and the real charge is the bundle product's variant price.
+ * sends one /cart/add.js request. It adds up the picked snacks' prices for DISPLAY only. The real
+ * charge is always the bundle product's variant price.
  *
  * Tray entries are VARIANT ids. A single-variant snack has one id. A snack with variants
  * opens a picker and adds the chosen variant.
@@ -45,6 +45,10 @@ class CrumbBuildBox extends HTMLElement {
     const { signal } = this.abort;
 
     this.strings = JSON.parse(stringsElement.textContent || "{}");
+    this.money = new Intl.NumberFormat(document.documentElement.lang || undefined, {
+      style: "currency",
+      currency: this.dataset.currency || "USD",
+    });
     this.adding = false;
     this.focusTarget = null;
     this.pendingChoose = null;
@@ -98,8 +102,7 @@ class CrumbBuildBox extends HTMLElement {
         slots: Number(input.dataset.slotCount) || 0,
         available: !input.disabled,
         priceText: input.dataset.priceText || "",
-        baseText: input.dataset.baseText || "",
-        savePct: Number(input.dataset.savePct) || 0,
+        priceCents: Number(input.dataset.priceCents) || 0,
         popular: input.dataset.popular === "true",
       }),
     );
@@ -156,6 +159,7 @@ class CrumbBuildBox extends HTMLElement {
         title: el.dataset.title || "",
         image: el.dataset.image || "",
         priceText: el.dataset.priceText || "",
+        priceCents: Number(el.dataset.priceCents) || 0,
         pickable: el.dataset.available === "true",
         choosable: el.dataset.choosable === "true",
         variantId: el.dataset.variantId || "",
@@ -178,6 +182,7 @@ class CrumbBuildBox extends HTMLElement {
           title: card.title,
           image: card.image,
           priceText: card.priceText,
+          priceCents: card.priceCents,
           available: true,
         });
       }
@@ -192,6 +197,7 @@ class CrumbBuildBox extends HTMLElement {
             }),
             image: variant.image || card.image,
             priceText: variant.price || card.priceText,
+            priceCents: Number(variant.cents) || card.priceCents,
             available: Boolean(variant.available),
           });
         }
@@ -211,6 +217,21 @@ class CrumbBuildBox extends HTMLElement {
 
   get isFull() {
     return this.capacity > 0 && this.state.snacks.length >= this.capacity;
+  }
+
+  /** Display only: the picked snacks at their own prices. The charge is the bundle price. */
+  get snackValueCents() {
+    return this.state.snacks.reduce((sum, id) => {
+      const item = this.items.get(id);
+      return sum + (item ? item.priceCents : 0);
+    }, 0);
+  }
+
+  /** Columns that fill every row: 4 -> 2, 6 -> 3, 8 -> 2, 9 -> 3. Falls back to 3. */
+  columnsFor(total) {
+    if (total % 3 === 0) return 3;
+    if (total % 2 === 0) return 2;
+    return 3;
   }
 
   defaultSize() {
@@ -802,6 +823,7 @@ class CrumbBuildBox extends HTMLElement {
     const { slots } = this.refs;
     const { strings } = this;
     slots.textContent = "";
+    slots.style.setProperty("--crumb-build-cols", String(this.columnsFor(size.slots)));
 
     for (let index = 0; index < size.slots; index += 1) {
       const entry = this.state.snacks[index];
@@ -913,7 +935,13 @@ class CrumbBuildBox extends HTMLElement {
 
   renderSummary(size, filled, total, remaining) {
     const { refs, strings } = this;
-    const hasSaving = size.savePct > 0;
+
+    // Value of what is actually in the tray, shown only once the box is full and really saves money.
+    const valueCents = this.snackValueCents;
+    const savedCents = valueCents - size.priceCents;
+    const savePct = valueCents > 0 ? Math.round((savedCents / valueCents) * 100) : 0;
+    const hasSaving = remaining === 0 && savePct > 0;
+    const valueText = hasSaving ? this.money.format(valueCents / 100) : "";
 
     refs.picked.textContent = fmt(strings.picked, { filled, total });
     refs.price.textContent = size.priceText;
@@ -924,16 +952,16 @@ class CrumbBuildBox extends HTMLElement {
     });
 
     refs.baseInline.hidden = !hasSaving;
-    refs.baseInline.textContent = hasSaving ? size.baseText : "";
+    refs.baseInline.textContent = valueText;
     refs.baseRow.hidden = !hasSaving;
-    refs.base.textContent = hasSaving ? size.baseText : "";
+    refs.base.textContent = valueText;
     refs.discountRow.hidden = !hasSaving;
     refs.discountTag.textContent = hasSaving
-      ? fmt(strings.save_tag, { percent: size.savePct })
+      ? fmt(strings.save_tag, { percent: savePct })
       : "";
     refs.saveInline.hidden = !hasSaving;
     refs.saveInline.textContent = hasSaving
-      ? fmt(strings.save_inline, { percent: size.savePct })
+      ? fmt(strings.save_inline, { percent: savePct })
       : "";
 
     if (refs.dips.length) {

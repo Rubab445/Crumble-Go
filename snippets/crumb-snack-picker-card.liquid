@@ -56,6 +56,7 @@
   data-handle="{{ product.handle }}"
   data-title="{{ product.title | escape }}"
   data-price-text="{{ product.price | money | escape }}"
+  data-price-cents="{{ product.price }}"
   data-image="{{ product.featured_image | image_url: width: 160 }}"
   data-available="{{ pickable }}"
   data-choosable="{{ choosable }}"
@@ -191,6 +192,7 @@
                 "id": {{ variant.id }},
                 "title": {{ variant.title | json }},
                 "price": {{ variant.price | money | json }},
+                "cents": {{ variant.price }},
                 "available": {{ variant.available | json }},
                 "image": {% if variant_image != blank %}{{ variant_image | image_url: width: 160 | json }}{% else %}null{% endif %}
               }{% unless forloop.last %},{% endunless %}
