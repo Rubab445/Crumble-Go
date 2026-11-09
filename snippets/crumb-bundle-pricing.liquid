@@ -1,0 +1,20 @@
+{%- doc -%}
+  Bundle discount from the variant's compare-at price. One source for the homepage
+  bundles section and the Build-a-Box page, so the two can never disagree.
+  Prints "compare_at|saved|percent" (cents, cents, whole %), no spaces. Example: "2900|300|10".
+  If there is no compare-at above the price, all three are 0.
+
+  @param {variant} variant - The bundle product's variant
+{%- enddoc -%}
+{%- liquid
+  assign compare_at = variant.compare_at_price | default: 0
+  assign saved = 0
+  assign percent = 0
+  if compare_at > variant.price
+    assign saved = compare_at | minus: variant.price
+    assign percent = saved | times: 100.0 | divided_by: compare_at | round
+  else
+    assign compare_at = 0
+  endif
+-%}
+{{- compare_at }}|{{ saved }}|{{ percent -}}

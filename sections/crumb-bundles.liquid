@@ -79,12 +79,20 @@
                   assign feature_items = features_mf.value | newline_to_br | split: '<br />'
                 endif
 
-                # Money, calculated here so a price change in admin updates the card.
+                # Money: the shared snippet works out compare-at and saving, same as Build-a-Box.
                 assign price = variant.price
-                assign compare_at = variant.compare_at_price | default: 0
-                assign savings = 0
-                if compare_at > price
-                  assign savings = compare_at | minus: price
+                capture pricing
+                  render 'crumb-bundle-pricing', variant: variant
+                endcapture
+                assign pricing_parts = pricing | strip | split: '|'
+                assign compare_at = pricing_parts[0] | plus: 0
+                assign savings = pricing_parts[1] | plus: 0
+
+                # Button goes to the Build-a-Box page with this size preselected.
+                assign build_page = section.settings.build_page | default: pages['build-a-box']
+                assign button_url = variant.url
+                if build_page != blank
+                  assign button_url = build_page.url | append: '?size=' | append: product.handle
                 endif
 
                 assign per_bag_text = ''
@@ -167,7 +175,7 @@
                 {%- endif -%}
 
                 {%- if product.available -%}
-                  <a class="crumb-bundles__button" href="{{ variant.url }}">
+                  <a class="crumb-bundles__button" href="{{ button_url }}">
                     {{- button_text | escape }}
                     <span aria-hidden="true">→</span>
                     <span class="crumb-bundles__sr-only"> – {{ product.title | escape }}</span>
@@ -602,6 +610,12 @@
       "id": "collection",
       "label": "Collection",
       "info": "Pick your Bundles collection. Products show in the collection's own order."
+    },
+    {
+      "type": "page",
+      "id": "build_page",
+      "label": "Build-a-Box page",
+      "info": "Bundle buttons open this page with the size preselected. Empty uses /pages/build-a-box."
     },
     {
       "type": "range",
