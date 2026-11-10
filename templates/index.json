@@ -54,7 +54,7 @@
               "type": "crumb-hero-buttons",
               "settings": {
                 "primary_label": "Start Building Your Box",
-                "primary_url": "shopify://collections/all",
+                "primary_url": "shopify://pages/build-a-box",
                 "secondary_label": "Browse All Snacks",
                 "secondary_url": "shopify://collections/all"
               },
@@ -224,6 +224,7 @@
       "name": "Crumb bundles",
       "settings": {
         "collection": "bundles",
+        "build_page": "",
         "max_products": 3,
         "tag": "Select Your Canvas",
         "heading": "Choose Your Bundle Size",
