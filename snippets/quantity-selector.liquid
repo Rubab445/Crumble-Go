@@ -55,7 +55,12 @@
         disabled
       {% endif %}
     >
-      <span class="visually-hidden">{{ 'accessibility.decrease_quantity' | t }}</span
+      <span class="visually-hidden">
+        {%- if line_index != null -%}
+          {{- 'crumb.cart.decrease_quantity' | t: title: product.title | escape -}}
+        {%- else -%}
+          {{- 'accessibility.decrease_quantity' | t -}}
+        {%- endif -%}</span
       ><span class="svg-wrapper icon-plus">
         {{- 'icon-minus.svg' | inline_asset_content -}}
       </span>
@@ -71,7 +76,7 @@
       on:focus="/selectInputValue"
       ref="quantityInput"
       aria-live="polite"
-      aria-label="{{ 'accessibility.quantity' | t }}"
+      aria-label="{% if line_index != null %}{{ 'crumb.cart.quantity' | t: title: product.title | escape }}{% else %}{{ 'accessibility.quantity' | t }}{% endif %}"
       {% if line_index %}
         data-cart-line="{{ line_index | plus: 1 }}"
       {% endif %}
@@ -93,8 +98,14 @@
         disabled
       {% endif %}
     >
-      <span class="visually-hidden">{{ 'accessibility.increase_quantity' | t }}</span
-      ><span class="svg-wrapper icon-plus">
+      <span class="visually-hidden">
+        {%- if line_index != null -%}
+          {{- 'crumb.cart.increase_quantity' | t: title: product.title | escape -}}
+        {%- else -%}
+          {{- 'accessibility.increase_quantity' | t -}}
+        {%- endif -%}
+        </span>
+      <span class="svg-wrapper icon-plus">
         {{- 'icon-plus.svg' | inline_asset_content -}}
       </span>
     </button>

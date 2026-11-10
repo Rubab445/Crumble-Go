@@ -326,6 +326,21 @@
     "product_custom_property_character_count": "{{ used_chars }}/{{ max_chars }} characters used"
   },
     "crumb": {
+    "cart": {
+      "build_a_box": "Build a box",
+      "shipping_remaining": "You're {{ amount }} away from free shipping",
+      "shipping_unlocked": "Free shipping unlocked!",
+      "snack_value_label": "Value of the snacks",
+      "save_percent": "Save {{ percent }}%",
+      "you_saved": "You saved",
+      "gift_label": "This order is a gift",
+      "checkout_with_total": "Check out · {{ total }}",
+      "decrease_quantity": "Decrease quantity of {{ title }}",
+      "increase_quantity": "Increase quantity of {{ title }}",
+      "quantity": "Quantity of {{ title }}",
+      "choose_snacks": "Choose your snacks",
+      "choose_snacks_hint": "Every box is made from snacks you pick. Choose them first, then add the box to your cart."
+    },
     "build": {
       "select_size": "Select size:",
       "size_snacks": "{{ count }} snacks",
@@ -402,6 +417,7 @@
       "notice_unavailable": "Some snacks in your saved box are no longer available and were removed.",
       "notice_trimmed": "Your saved box was larger than this size, so the last snacks were removed.",
       "slot_property": "Slot {{ number }}",
+      "bonus_property": "Bonus",
       "empty_hint": "No box sizes found. Check the Bundles collection and slot_count metafield.",
       "variant_label": "{{ title }} – {{ variant }}",
       "choose_legend": "Choose an option",

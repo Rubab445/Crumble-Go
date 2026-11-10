@@ -26,6 +26,9 @@
   if settings.quick_add and product.available
     assign has_quick_add = true
   endif
+  if product.tags contains 'bundle'
+    assign has_quick_add = false
+  endif
 
   assign has_mobile_quick_add = false
   if has_quick_add and settings.mobile_quick_add

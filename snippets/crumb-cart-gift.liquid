@@ -1,0 +1,24 @@
+{%- doc -%}
+  "This order is a gift" checkbox, saved as the cart attribute "Gift".
+  The form attribute ties it to the cart form, so it reaches checkout from both the page and the drawer.
+{%- enddoc -%}
+
+<script src="{{ 'crumb-cart-gift.js' | asset_url }}" type="module" fetchpriority="low"></script>
+
+<crumb-gift-toggle class="crumb-gift" data-update-url="{{ routes.cart_update_url }}.js">
+  {%- comment -%} Sent when the box is unticked, so "Gift" is cleared instead of staying "Yes". {%- endcomment -%}
+  <input type="hidden" name="attributes[Gift]" value="" form="cart-form">
+  <label class="crumb-gift__label">
+    <input
+      class="crumb-gift__input"
+      type="checkbox"
+      name="attributes[Gift]"
+      value="Yes"
+      form="cart-form"
+      {% if cart.attributes['Gift'] == 'Yes' %}
+        checked
+      {% endif %}
+    >
+    <span>{{ 'crumb.cart.gift_label' | t }}</span>
+  </label>
+</crumb-gift-toggle>

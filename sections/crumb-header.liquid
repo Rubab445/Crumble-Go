@@ -274,6 +274,8 @@
 
   .crumb-header {
     box-sizing: border-box;
+    container-type: inline-size;
+    container-name: crumb-header;
     padding: var(--crumb-header-pad) var(--crumb-gutter);
     font-family: var(--crumb-font-body);
   }
@@ -432,7 +434,7 @@
     transform: rotate(2deg);
   }
 
-  @media screen and (min-width: 990px) {
+  @container crumb-header (min-width: 942px) {
     .crumb-header__nav {
       display: block;
     }
@@ -455,7 +457,7 @@
     white-space: nowrap;
   }
 
-  @media screen and (min-width: 1200px) {
+  @container crumb-header (min-width: 1152px) {
     .crumb-header__status-chip {
       display: inline-flex;
       align-items: center;
@@ -548,7 +550,7 @@
     display: none;
   }
 
-  @media screen and (min-width: 990px) {
+  @container crumb-header (min-width: 942px) {
     .crumb-header__account {
       display: inline-flex;
     }
@@ -739,7 +741,7 @@
       "info": "Leave blank to hide.",
       "default": "Make Your Own"
     },
-        {
+    {
       "type": "header",
       "content": "Status chip"
     },

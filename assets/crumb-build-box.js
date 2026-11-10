@@ -644,12 +644,19 @@ class CrumbBuildBox extends HTMLElement {
     });
     // Underscore properties are hidden at checkout and in the cart: kept for fulfilment.
     properties._snacks = this.state.snacks.join(",");
+    // Hidden: what the picked snacks cost on their own. The cart reads this to show the real saving.
+    properties._base_cents = String(this.snackValueCents);
+    // Visible: the free bonus rides on the box, so it can never be separated from it.
+    const size = this.size;
+    if (size && this.dipActive(size)) {
+      properties[this.strings.bonus_property] = this.dataset.dipTitle;
+    }
     return properties;
   }
 
   dipActive(size) {
     const min = Number(this.dataset.dipMin) || 0;
-    return Boolean(this.dataset.dipVariant) && size.slots >= min;
+    return Boolean(this.dataset.dipTitle) && size.slots >= min;
   }
 
   /** Lets the header cart count update, using the theme's own cart event. Optional: never blocks adding. */
@@ -732,9 +739,7 @@ class CrumbBuildBox extends HTMLElement {
         properties: this.buildProperties(),
       },
     ];
-    if (this.dipActive(size))
-      items.push({ id: Number(this.dataset.dipVariant), quantity: 1 });
-
+    
     const cartEvent = await this.prepareCartEvent(items);
 
     try {

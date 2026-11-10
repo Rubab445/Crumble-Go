@@ -1,0 +1,33 @@
+{%- doc -%}
+  Free-shipping progress bar, shared by the cart page and the cart drawer.
+  The threshold is one theme setting: Theme settings > Crumb cart.
+  It sits inside the cart section, so it re-renders whenever the cart changes.
+{%- enddoc -%}
+
+{%- liquid
+  assign threshold = settings.crumb_free_shipping_threshold | default: 0
+  assign threshold_cents = threshold | times: 100
+-%}
+
+{%- if threshold_cents > 0 and cart.item_count > 0 -%}
+  {%- liquid
+    assign remaining = threshold_cents | minus: cart.total_price
+    assign percent = cart.total_price | times: 100.0 | divided_by: threshold_cents | round
+    if percent > 100
+      assign percent = 100
+    endif
+    assign remaining_money = remaining | money
+  -%}
+  <div class="crumb-ship" data-unlocked="{% if remaining <= 0 %}true{% else %}false{% endif %}">
+    <p class="crumb-ship__text" role="status">
+      {%- if remaining <= 0 -%}
+        {{ 'crumb.cart.shipping_unlocked' | t }}
+      {%- else -%}
+        {{ 'crumb.cart.shipping_remaining' | t: amount: remaining_money }}
+      {%- endif -%}
+    </p>
+    <div class="crumb-ship__track" aria-hidden="true">
+      <div class="crumb-ship__fill" style="inline-size: {{ percent }}%"></div>
+    </div>
+  </div>
+{%- endif -%}

@@ -43,7 +43,15 @@
   {% endif %}
   {{ block.shopify_attributes }}
 >
-  {%- if product != blank -%}
+    {%- if product.tags contains 'bundle' -%}
+    {%- assign crumb_build_base = pages['build-a-box'].url | default: routes.root_url -%}
+    <div class="crumb-bundle-cta">
+      <p class="crumb-bundle-cta__hint">{{ 'crumb.cart.choose_snacks_hint' | t }}</p>
+      <a class="button crumb-bundle-cta__button" href="{{ crumb_build_base }}?size={{ product.handle }}">
+        {{ 'crumb.cart.choose_snacks' | t }}
+      </a>
+    </div>
+  {%- elsif product != blank -%}
     {%- assign product_form_id = 'BuyButtons-ProductForm-' | append: section.id -%}
     <product-form-component
       data-section-id="{{ section.id }}"
