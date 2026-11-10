@@ -1,0 +1,231 @@
+/* Crumb & Co. cart. Page and drawer share these rules.
+   Horizon's cart markup is kept; this only restyles it. */
+
+/* --- Free-shipping bar ---------------------------------------------------- */
+.crumb-ship {
+  margin-block-end: var(--crumb-space-lg);
+  padding: var(--crumb-space-md);
+  background: var(--crumb-surface-lowest);
+  border: var(--crumb-border);
+  border-radius: var(--crumb-radius-md);
+  box-shadow: var(--crumb-shadow-sm);
+}
+
+.crumb-ship__text {
+  margin: 0 0 var(--crumb-space-sm);
+  color: var(--crumb-ink);
+  font-weight: 700;
+}
+
+.crumb-ship__track {
+  block-size: 0.75rem;
+  background: var(--crumb-surface-container);
+  border: 2px solid var(--crumb-ink);
+  border-radius: var(--crumb-radius-full);
+  overflow: hidden;
+}
+
+.crumb-ship__fill {
+  block-size: 100%;
+  background: var(--crumb-mustard);
+  transition: inline-size var(--crumb-transition);
+}
+
+.crumb-ship[data-unlocked='true'] .crumb-ship__fill {
+  background: var(--crumb-mint);
+}
+
+.crumb-ship[data-unlocked='true'] .crumb-ship__text {
+  color: var(--crumb-mint-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crumb-ship__fill {
+    transition: none;
+  }
+}
+
+/* --- Cart lines ------------------------------------------------------------ */
+.cart-items-component .cart-items__table tbody .cart-items__table-row {
+  padding: var(--crumb-space-md);
+  margin-block-end: var(--crumb-space-md);
+  background: var(--crumb-surface-lowest);
+  border: var(--crumb-border);
+  border-radius: var(--crumb-radius-md);
+  box-shadow: var(--crumb-shadow-sm);
+}
+
+.cart-items__title {
+  color: var(--crumb-ink);
+  font-family: var(--crumb-font-display);
+  font-weight: 800;
+}
+
+/* Snack lines were pale and thin: make them readable. */
+.cart-items__properties {
+  color: var(--crumb-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.cart-items__properties dt {
+  color: var(--crumb-ink-muted);
+  font-weight: 700;
+}
+
+.cart-items__properties dd {
+  color: var(--crumb-ink);
+}
+
+/* Box lines: the line total on the right is the price. Hide Horizon's unit price and compare-at. */
+[data-crumb-box='true'] .cart-items__unit-price-wrapper {
+  display: none;
+}
+
+.crumb-cart__thumb-fallback {
+  display: grid;
+  place-items: center;
+  aspect-ratio: var(--ratio, 1);
+  background: var(--crumb-mustard-soft);
+  color: var(--crumb-ink);
+  border: 2px solid var(--crumb-ink);
+  border-radius: var(--crumb-radius-sm);
+}
+
+.cart-items__price {
+  color: var(--crumb-ink);
+  font-weight: 800;
+  text-align: end;
+}
+
+.crumb-cart__was {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--crumb-space-xs) var(--crumb-space-sm);
+  color: var(--crumb-ink-muted);
+  font-weight: 600;
+}
+
+.crumb-cart__save {
+  padding: 0.125rem 0.5rem;
+  background: var(--crumb-mint);
+  color: var(--crumb-on-mint);
+  border: 2px solid var(--crumb-ink);
+  border-radius: var(--crumb-radius-full);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.cart-items .quantity-selector {
+  background: var(--crumb-surface-lowest);
+  border: 2px solid var(--crumb-ink);
+  border-radius: var(--crumb-radius-md);
+}
+
+.cart-items__remove {
+  color: var(--crumb-ink);
+}
+
+/* Visible keyboard focus everywhere in the cart */
+.cart-items-component :is(a, button, input):focus-visible {
+  outline: 3px solid var(--crumb-primary);
+  outline-offset: 2px;
+}
+
+/* --- Summary ----------------------------------------------------------------- */
+.cart-summary__inner {
+  color: var(--crumb-ink);
+}
+
+.crumb-cart__saved {
+  margin-block: var(--crumb-space-sm);
+  color: var(--crumb-mint-deep);
+  font-weight: 800;
+}
+
+.crumb-gift {
+  display: block;
+  inline-size: 100%;
+}
+
+.crumb-gift__label {
+  display: flex;
+  align-items: center;
+  gap: var(--crumb-space-sm);
+  min-block-size: 2.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crumb-gift__input {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  accent-color: var(--crumb-coral);
+}
+
+/* Coral checkout button: the summary button and the mobile bar button */
+.cart__ctas .cart__checkout-button.button,
+.crumb-cart__bar .crumb-cart__bar-button.button {
+  --button-background-color: var(--crumb-coral);
+  --button-color: var(--crumb-on-coral);
+  background-color: var(--crumb-coral);
+  color: var(--crumb-on-coral);
+  border: var(--crumb-border);
+  border-radius: var(--crumb-radius-md);
+  box-shadow: var(--crumb-shadow-md);
+  font-weight: 800;
+  transition: box-shadow var(--crumb-transition), transform var(--crumb-transition);
+}
+
+.cart__ctas .cart__checkout-button.button:hover:not(:disabled),
+.crumb-cart__bar .crumb-cart__bar-button.button:hover {
+  box-shadow: var(--crumb-shadow-lg);
+}
+
+.cart__ctas .cart__checkout-button.button:active:not(:disabled),
+.crumb-cart__bar .crumb-cart__bar-button.button:active {
+  box-shadow: var(--crumb-shadow-none);
+  transform: translate(4px, 4px);
+}
+
+/* --- Sticky checkout bar (cart page, mobile only; the drawer already has a sticky summary) --- */
+.crumb-cart__bar {
+  display: none;
+}
+
+@media screen and (max-width: 749px) {
+  .crumb-cart__bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 5;
+    display: block;
+    padding: var(--crumb-space-sm) var(--crumb-gutter) calc(var(--crumb-space-sm) + env(safe-area-inset-bottom));
+    background: var(--crumb-surface-lowest);
+    border-block-start: var(--crumb-border);
+  }
+
+  .crumb-cart__bar .crumb-cart__bar-button {
+    inline-size: 100%;
+    min-block-size: 3rem;
+  }
+
+  .cart-page:has(.crumb-cart__bar) {
+    padding-block-end: 5.5rem;
+  }
+}
+
+/* --- Header cart button: keep label and count on one line once the cart has items.
+   Best guess without seeing it render; check on the preview. --- */
+.crumb-header__cart,
+.crumb-header__cart-icon {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.crumb-header__cart {
+  flex-shrink: 0;
+}

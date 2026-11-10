@@ -226,6 +226,12 @@
       assign total_price = cart.total_price | money
     endif
   -%}
+  {%- if cart.total_discount > 0 -%}
+    <span class="cart-totals__item crumb-cart__saved cart-primary-typography">
+      <span>{{ 'crumb.cart.you_saved' | t }}</span>
+      <bdi>{{ cart.total_discount | money }}</bdi>
+    </span>
+  {%- endif -%}
 
   <div class="cart-totals__container{% if settings.show_installments %} cart-totals__container--has-installments{% endif %}">
     <span
@@ -257,6 +263,7 @@
   </div>
 </div>
 
+{% render 'crumb-cart-gift' %}
 <div class="cart__ctas">
   <button
     type="submit"
@@ -616,3 +623,4 @@
     }
   }
 {% endstylesheet %}
+

@@ -66,10 +66,10 @@
 
     <a
       class="button cart-items__empty-button"
-      href="{{ settings.empty_cart_button_link | default: routes.all_products_collection_url }}"
+      href="{{ pages['build-a-box'].url | default: settings.empty_cart_button_link | default: routes.all_products_collection_url }}"
     >
       <span class="button-text">
-        {{ 'actions.continue_shopping' | t }}
+        {{ 'crumb.cart.build_a_box' | t }}
       </span>
     </a>
   {%- else -%}
@@ -80,6 +80,7 @@
     >
       {{- cart.item_count -}}
     </span>
+    {% render 'crumb-cart-shipping-bar' %}
     <form
       action="{{ routes.cart_url }}"
       class="cart-form"
@@ -150,6 +151,7 @@
                 role="row"
                 class="cart-items__table-row{% if item.parent_relationship.parent != null %} cart-items__nested-line{% endif %}{% if context == 'drawer' %}{% unless item.unit_price_measurement %} cart-items__table-row--full-width-variants{% endunless %}{% endif %}"
                 ref="cartItemRows[]"
+                data-crumb-box="{% if item.properties['_base_cents'] != blank %}true{% else %}false{% endif %}"
                 data-parent-key="{{ item.parent_relationship.parent.key }}"
                 data-key="{{ item.key }}"
               >
@@ -182,6 +184,25 @@
                         echo item.image | image_url: width: 250 | image_tag: class: 'cart-items__media-image border-style', style: border_override
                       -%}
                     </a>
+                  {%- else -%}
+                    <div
+                      class="cart-items__media-container crumb-cart__thumb-fallback"
+                      style="--ratio:1;"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="40%"
+                        height="40%"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>
+                      </svg>
+                    </div>
                   {%- endif %}
                 </td>
                 <td
@@ -409,6 +430,23 @@
                   role="cell"
                   headers="productTotal"
                 >
+                  {%- liquid
+                    assign base_unit_cents = item.properties._base_cents | plus: 0
+                    assign base_line_cents = base_unit_cents | times: item.quantity
+                    assign saving_percent = 0
+                    if base_line_cents > item.final_line_price
+                      assign saving_percent = base_line_cents | minus: item.final_line_price | times: 100.0 | divided_by: base_line_cents | round
+                    endif
+                  -%}
+                  {%- if saving_percent > 0 -%}
+                    <span class="crumb-cart__was">
+                      <span class="visually-hidden">{{ 'crumb.cart.snack_value_label' | t }}</span>
+                      <s
+                        ><bdi>{{ base_line_cents | money }}</bdi></s
+                      >
+                      <span class="crumb-cart__save">{{ 'crumb.cart.save_percent' | t: percent: saving_percent }}</span>
+                    </span>
+                  {%- endif -%}
                   <text-component value="{{ price | strip_html }}"
                     ><bdi>{{ price }}</bdi></text-component
                   >

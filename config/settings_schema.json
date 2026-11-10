@@ -33,7 +33,20 @@
     { "type": "color", "id": "crumb_on_coral", "label": "Text on coral", "default": "#1b1b1c" },
     { "type": "color", "id": "crumb_on_mustard", "label": "Text on mustard", "default": "#6b4b00" },
     { "type": "color", "id": "crumb_on_mustard_soft", "label": "Text on mustard soft", "default": "#271900" },
-        { "type": "color", "id": "crumb_on_mint", "label": "Text on mint", "default": "#1b1b1c" },
+            { "type": "color", "id": "crumb_on_mint", "label": "Text on mint", "default": "#1b1b1c" }
+      ]
+    },
+    {
+      "name": "Crumb cart",
+      "settings": [
+        {
+          "type": "number",
+          "id": "crumb_free_shipping_threshold",
+          "label": "Free shipping threshold",
+          "default": 25,
+          "info": "In store currency (25 = $25). Must match a free-shipping rate in Settings > Shipping and delivery. 0 hides the bar."
+        }
+    
   ]
 },
   {
