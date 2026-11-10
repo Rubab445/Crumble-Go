@@ -337,7 +337,9 @@
       "checkout_with_total": "Check out · {{ total }}",
       "decrease_quantity": "Decrease quantity of {{ title }}",
       "increase_quantity": "Increase quantity of {{ title }}",
-      "quantity": "Quantity of {{ title }}"
+      "quantity": "Quantity of {{ title }}",
+      "choose_snacks": "Choose your snacks",
+      "choose_snacks_hint": "Every box is made from snacks you pick. Choose them first, then add the box to your cart."
     },
     "build": {
       "select_size": "Select size:",

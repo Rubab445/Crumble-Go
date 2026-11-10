@@ -229,3 +229,30 @@
 .crumb-header__cart {
   flex-shrink: 0;
 }
+/* --- Bundle product page: no add to cart, send shoppers to the builder --- */
+.crumb-bundle-cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--crumb-space-sm);
+}
+
+.crumb-bundle-cta__hint {
+  margin: 0;
+  color: var(--crumb-ink-muted);
+  font-weight: 600;
+}
+
+.crumb-bundle-cta .crumb-bundle-cta__button.button {
+  --button-background-color: var(--crumb-coral);
+  --button-color: var(--crumb-on-coral);
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  background-color: var(--crumb-coral);
+  color: var(--crumb-on-coral);
+  border: var(--crumb-border);
+  border-radius: var(--crumb-radius-md);
+  box-shadow: var(--crumb-shadow-md);
+  font-weight: 800;
+  text-decoration: none;
+}
