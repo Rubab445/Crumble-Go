@@ -45,8 +45,8 @@
           "type": "_cart-summary",
           "static": true,
           "settings": {
-            "extend_summary": true,
-            "background_color": "{{ settings.color_palette.color2 }}",
+            "extend_summary": false,
+            "background_color": "",
             "border": "none",
             "border_width": 1,
             "border_opacity": 100,

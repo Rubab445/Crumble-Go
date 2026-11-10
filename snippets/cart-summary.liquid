@@ -226,10 +226,21 @@
       assign total_price = cart.total_price | money
     endif
   -%}
-  {%- if cart.total_discount > 0 -%}
+  {%- liquid
+    assign crumb_saved_cents = cart.total_discount
+    for item in cart.items
+      assign base_unit_cents = item.properties._base_cents | plus: 0
+      assign base_line_cents = base_unit_cents | times: item.quantity
+      if base_line_cents > item.original_line_price
+        assign box_saving = base_line_cents | minus: item.original_line_price
+        assign crumb_saved_cents = crumb_saved_cents | plus: box_saving
+      endif
+    endfor
+    assign crumb_saved_money = crumb_saved_cents | money
+  -%}
+  {%- if crumb_saved_cents > 0 -%}
     <span class="cart-totals__item crumb-cart__saved cart-primary-typography">
-      <span>{{ 'crumb.cart.you_saved' | t }}</span>
-      <bdi>{{ cart.total_discount | money }}</bdi>
+      {{ 'crumb.cart.you_saved' | t: amount: crumb_saved_money }}
     </span>
   {%- endif -%}
 
@@ -623,4 +634,3 @@
     }
   }
 {% endstylesheet %}
-

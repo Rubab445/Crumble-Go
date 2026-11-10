@@ -256,3 +256,17 @@
   font-weight: 800;
   text-decoration: none;
 }
+
+/* --- Summary card (cart page): same look as the line cards --- */
+.cart-summary .cart-summary__inner {
+  background: var(--crumb-surface-lowest);
+  border: var(--crumb-border);
+  border-radius: var(--crumb-radius-md);
+  box-shadow: var(--crumb-shadow-md);
+}
+
+@media screen and (max-width: 749px) {
+  .cart-summary .cart-summary__inner {
+    padding: var(--crumb-space-md);
+  }
+}

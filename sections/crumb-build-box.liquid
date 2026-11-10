@@ -12,8 +12,8 @@
     The summary shows the real value of the snacks in the tray (each snack's own price) next to the
     box price. JavaScript only adds those prices up for display. The charge is always the bundle
     variant price.
-  - Free dip: shown only when a dip product is chosen. It is added as a second line in the same
-    /cart/add.js call. It is free only if an automatic "Buy X Get Y" discount exists in admin.
+    - Bonus: shown only when a bonus name is set. It travels with the box as a visible "Bonus"
+    line item property, so it is never a separate product or cart line.
 
   All storefront text comes from locales (crumb.build.*). Merchant-editable copy is in settings.
 {%- endcomment -%}
@@ -26,7 +26,7 @@
 
   assign snacks = section.settings.snacks
   assign bundles = section.settings.bundles
-  assign dip = section.settings.dip_product
+  assign bonus_name = section.settings.bonus_name | strip
   assign box_id = 'CrumbBuild-' | append: section.id
 
   assign tag_text = section.settings.tag | strip
@@ -40,9 +40,8 @@
   assign promise_text = section.settings.promise_text | strip
 
   assign dip_ok = false
-  if dip != blank and dip.available
+  if bonus_name != blank
     assign dip_ok = true
-    assign dip_variant = dip.selected_or_first_available_variant
   endif
 
   # Editor warning: the free dip must not be one of the snacks.
@@ -207,18 +206,13 @@
       data-cart-url="{{ routes.cart_url }}"
       data-currency="{{ cart.currency.iso_code }}"
       {% if dip_ok %}
-        data-dip-variant="{{ dip_variant.id }}"
-        data-dip-title="{{ dip.title | escape }}"
+        data-dip-title="{{ bonus_name | escape }}"
         data-dip-min="{{ section.settings.dip_min_slots }}"
       {% endif %}
     >
       <script type="application/json" data-strings>
         {{ strings_json }}
       </script>
-
-      {%- if dip_in_snacks and request.design_mode -%}
-        <p class="crumb-build__hint">{{ 'crumb.build.dip_in_snacks_warning' | t }}</p>
-      {%- endif -%}
 
       {%- comment -%} One polite live region for count changes, one alert for errors. {%- endcomment -%}
       <p class="crumb-build__sr" role="status" aria-live="polite" data-live></p>
@@ -2351,13 +2345,14 @@
     },
     {
       "type": "header",
-      "content": "Free dip (optional)"
+      "content": "Bonus (optional)"
     },
     {
-      "type": "product",
-      "id": "dip_product",
-      "label": "Dip product",
-      "info": "Leave empty to hide the free-dip banner. It is only free if you create an automatic Buy X Get Y discount in admin."
+      "type": "text",
+      "id": "bonus_name",
+      "label": "Bonus name",
+      "default": "Chef's Surprise Crumb Dip",
+      "info": "Added to boxes of the size below or larger as a free bonus line. Leave empty to hide it."
     },
     {
       "type": "range",
